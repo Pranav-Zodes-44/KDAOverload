@@ -1,9 +1,7 @@
 from riotwatcher import LolWatcher, ApiError
-import riotwatcher
 import time
 class League:
     
-    lol_watcher = LolWatcher('RGAPI-59fa5deb-9bf1-4589-8cc4-69eb053fdb75')
     regions = {"NA":"na1", "North America":"na1",
             "EUW":"euw1", "Europe West":"euw1",
             "EUNE":"eun1", "EUN":"eun1", "Europe Nordic & East": "eun1",
@@ -16,10 +14,17 @@ class League:
             "Latin America North":"la1", "LAN": "la1",
             "Latin America South":"la2", "LAS": "la2"}
 
-    def __init__(self, region: str = None, summ_id: str = None, puuid: str = None) -> None:
+    def __init__(self, region: str = None, summ_id: str = None, puuid: str = None, api_key: str = None) -> None:
         self.summ_id = summ_id
         self.region = region
         self.puuid = puuid
+        self.api_key = self.get_api_key()
+        self.lol_watcher = LolWatcher(self.api_key)
+
+    def get_api_key(self):
+        with open('config.txt', 'r') as f:
+            api_key = f.readlines()[0]
+        return api_key
 
     def set_summoner_id_from_name(self):
         while True:
