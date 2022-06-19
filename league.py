@@ -2,6 +2,9 @@ from datapipelines import NotFoundError
 import cassiopeia as cass
 from collections import Counter
 import arrow
+import discord
+from discord.ext import commands
+
 class League:
     
     regions = {"NA":"NA", "NORTH AMERICA":"NA",
@@ -91,7 +94,7 @@ class League:
             continent = self.summoner.region.continent,
             puuid = self.puuid,
             queue = cass.Queue.ranked_solo_fives,
-            begin_time=arrow.Arrow(2022, 6, 13)
+            begin_time=arrow.Arrow(2022, 6, 17), end_index=4
         )
 
         champion_id_to_name = {
@@ -113,23 +116,21 @@ class League:
         for champion_name, count in played_champs.most_common(10):
             print(champion_name, count)   
         print()
-
         match = match_history[0]
         print("Match ID: ", match.id)
         print()
 
-        # for x, participant in enumerate(match.participants):
-        #     print(participant.summoner.name, "playing", participant.champion.name, participant.win)
-        #     if x == 9:
-        #         break
-
         print("Blue team win: ", match.blue_team.win)
         for participant in match.blue_team.participants:
-            print(participant.summoner.name, "playing", participant.champion.name)
-
+            print(f"""{participant.summoner.name} playing {participant.champion.name}
+    - Stats: {participant.stats.kda}
+            """)
+        
         print("\nRed team win: ", match.red_team.win)
         for participant in match.red_team.participants:
-            print(participant.summoner.name, "playing", participant.champion.name)
+            print(f"""{participant.summoner.name} playing {participant.champion.name}
+    - Stats: {participant.stats.kda}
+            """)
         print()
 
 
@@ -146,17 +147,19 @@ class League:
         #     print(f"    Assits: {participant['assists']}")
         #     print()
 
-    def menu():
-        '''
-        Menu printout on the what they can do
-        eg:
-        1. Mastery
-        2. Ranked Stats
-        3. etc.
-        4. etc.
-        '''
-        #TODO: Create menu
-        pass
+
+    #Not going
+    # def menu():
+    #     '''
+    #     Menu printout on the what they can do
+    #     eg:
+    #     1. Mastery
+    #     2. Ranked Stats
+    #     3. etc.
+    #     4. etc.
+    #     '''
+    #     #TODO: Create menu
+    #     pass
 
     
 
