@@ -33,50 +33,35 @@ class League:
         return api_key
 
     def set_summoner_id_from_name(self, summoner_name, region):
-        while True:
-            try:
-                self.set_region(region = region)
-                summoner = self.summoner = cass.get_summoner(name=summoner_name, region=self.region)
-                self.summ_id, self.puuid = summoner.id, summoner.puuid
-                break
-            except NotFoundError as NFerr:
-                print("\nThat's a ridiculous name! Please enter a valid summoner name...\n")
-                continue
-            # except ApiError as err:
-            #     if err.response.status_code == 429:
-            #         print('We should retry in {} seconds.'.format(err.headers['Retry-After']))
-            #         print('this retry-after is handled by default by the RiotWatcher library')
-            #         print('future requests wait until the retry-after time passes')
-            #     elif err.response.status_code == 404:
-            #         print('Summoner with that ridiculous name not found.')
-            #         print('Please make sure the name you entered is correct \n')
-            #         continue
-            #     else:
-            #         raise
+
+            self.set_region(region = region)
+            summoner = self.summoner = cass.get_summoner(name=summoner_name, region=self.region)
+            self.summ_id, self.puuid = summoner.id, summoner.puuid
+            
         # self.latest_ranked_match()
     
     def set_region(self, region):
 
         self.region = self.regions[region.upper()]
 
-    def print_regions(self):
+    def get_regions(self):
         
         # TODO: Print all the regions that are available for input
-        print("""
-        North America/NA
-        Europe West/EUW
-        Europe Nordic & East/EUN/EUNE
-        Korea/KR
-        Brazil/BR
-        Japan/JP
-        Russia/RU
-        Oceania/OCE/OC
-        Turkey/TR
-        Latin America North/LAN
-        Latin America South/LAS
-        """)
-        
-        pass
+        return """
+Available regions:
+North America/NA
+Europe West/EUW
+Europe Nordic & East/EUN/EUNE
+Korea/KR
+Brazil/BR
+Japan/JP
+Russia/RU
+Oceania/OCE/OC
+Turkey/TR
+Latin America North/LAN
+Latin America South/LAS
+        """
+
 
     def get_latest_normal_match(self, summoner_name, region) -> cass.core.match.Match:
 
