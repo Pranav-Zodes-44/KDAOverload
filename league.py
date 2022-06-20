@@ -32,11 +32,10 @@ class League:
             api_key = f.readlines()[0].strip()
         return api_key
 
-    def set_summoner_id_from_name(self):
+    def set_summoner_id_from_name(self, summoner_name, region):
         while True:
             try:
-                summoner_name: str = str(input("Summoner name: "))
-                self.set_region()
+                self.set_region(region = region)
                 summoner = self.summoner = cass.get_summoner(name=summoner_name, region=self.region)
                 self.summ_id, self.puuid = summoner.id, summoner.puuid
                 break
@@ -56,17 +55,9 @@ class League:
             #         raise
         # self.latest_ranked_match()
     
-    def set_region(self):
-        while True:
-            region_in = input("Summoner region: ")
-            #TODO: Change to dictionary
-            try:
-                self.region = self.regions[region_in.upper()]
-                break
-            except KeyError as e:
-                print("Invalid region, please enter one of the following regions: \n")
-                self.print_regions()
-                continue
+    def set_region(self, region):
+
+        self.region = self.regions[region.upper()]
 
     def print_regions(self):
         
@@ -87,51 +78,62 @@ class League:
         
         pass
 
-    def latest_ranked_match(self):
+    def get_latest_normal_match(self, summoner_name, region) -> cass.core.match.Match:
+
+        self.set_summoner_id_from_name(summoner_name=summoner_name, region=region)
+
+        match_history = cass.get_match_history(
+            continent = self.summoner.region.continent,
+            puuid = self.puuid,
+            queue = cass.Queue.normal_draft_fives,
+            end_index=4
+        )
+
+        return match_history[0]
+
+
+    def latest_ranked_match(self) -> cass.core.match.Match:
         print("Getting latest ranked match info...\n")
 
         match_history = cass.get_match_history(
             continent = self.summoner.region.continent,
             puuid = self.puuid,
-            queue = cass.Queue.ranked_solo_fives,
-            begin_time=arrow.Arrow(2022, 6, 17), end_index=4
+            queue = cass.Queue.normal_draft_fives,
+            end_index=4
         )
 
-        champion_id_to_name = {
-            champion.id: champion.name for champion in cass.get_champions(region=self.region)
-        }
+        # champion_id_to_name = {
+        #     champion.id: champion.name for champion in cass.get_champions(region=self.region)
+        # }
 
-        played_champs = Counter()
-
-        for match in match_history:
-            champion_id = match.participants[self.summoner].champion.id
-            champion_name = champion_id_to_name[champion_id]
-            played_champs[champion_name] += 1
+        # played_champs = Counter()
+        # for match in match_history:
+        #     match = cass.Match.from_match_reference(match)
+        #     champion_id = match.participants[self.summoner].champion.id
+        #     champion_name = champion_id_to_name[champion_id]
+        #     played_champs[champion_name] += 1
         
-        print("\033c", end="")
+        # print("\033c", end="")
 
-        print("Number of matches played: ", len(match_history))
+        # print("Number of matches played: ", len(match_history))
 
-        print(f"Top 10 Champions played by {self.summoner.name}: ") 
-        for champion_name, count in played_champs.most_common(10):
-            print(champion_name, count)   
-        print()
+        # print(f"Top 10 Champions played by {self.summoner.name}: ") 
+        # for champion_name, count in played_champs.most_common(10):
+        #     print(champion_name, count)   
+        # print()
+        
         match = match_history[0]
-        print("Match ID: ", match.id)
-        print()
-
-        print("Blue team win: ", match.blue_team.win)
-        for participant in match.blue_team.participants:
-            print(f"""{participant.summoner.name} playing {participant.champion.name}
-    - Stats: {participant.stats.kda}
-            """)
         
-        print("\nRed team win: ", match.red_team.win)
-        for participant in match.red_team.participants:
-            print(f"""{participant.summoner.name} playing {participant.champion.name}
-    - Stats: {participant.stats.kda}
-            """)
-        print()
+        return match
+
+    #     print("Blue team win: ", match.blue_team.win)
+        
+    #     print("\nRed team win: ", match.red_team.win)
+    #     for participant in match.red_team.participants:
+    #         print(f"""{participant.summoner.name} playing {participant.champion.name}
+    # - Stats: {participant.stats.kda}
+    #         """)
+    #     print()
 
 
         # latest_match_id = self.lol_watcher.match.matchlist_by_puuid(self.region, self.puuid, type='ranked')[0]
