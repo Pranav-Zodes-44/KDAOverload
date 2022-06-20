@@ -106,22 +106,8 @@ class League:
         #     champion.id: champion.name for champion in cass.get_champions(region=self.region)
         # }
 
-        # played_champs = Counter()
-        # for match in match_history:
-        #     match = cass.Match.from_match_reference(match)
-        #     champion_id = match.participants[self.summoner].champion.id
-        #     champion_name = champion_id_to_name[champion_id]
-        #     played_champs[champion_name] += 1
-        
-        # print("\033c", end="")
 
-        # print("Number of matches played: ", len(match_history))
 
-        # print(f"Top 10 Champions played by {self.summoner.name}: ") 
-        # for champion_name, count in played_champs.most_common(10):
-        #     print(champion_name, count)   
-        # print()
-        
         match = match_history[0]
         
         return match
