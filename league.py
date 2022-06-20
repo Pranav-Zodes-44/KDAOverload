@@ -112,47 +112,6 @@ class League:
         
         return match
 
-    #     print("Blue team win: ", match.blue_team.win)
-        
-    #     print("\nRed team win: ", match.red_team.win)
-    #     for participant in match.red_team.participants:
-    #         print(f"""{participant.summoner.name} playing {participant.champion.name}
-    # - Stats: {participant.stats.kda}
-    #         """)
-    #     print()
-
-
-        # latest_match_id = self.lol_watcher.match.matchlist_by_puuid(self.region, self.puuid, type='ranked')[0]
-        # latest_match_info = self.lol_watcher.match.by_id(self.region, latest_match_id)
-        # date = time.strftime('%A, %B %e, %Y - %H:%M',time.localtime(latest_match_info['info']['gameStartTimestamp']))
-        # print(f"Match date: {date}\n")
-        # participants = latest_match_info['info']['participants']
-        # for participant in participants:
-        #     print(f"Summoner name: {participant['summonerName']}")
-        #     print(f"    Champion: {participant['championName']}")
-        #     print(f"    Kills: {participant['kills']}")
-        #     print(f"    Deaths: {participant['deaths']}")
-        #     print(f"    Assits: {participant['assists']}")
-        #     print()
-
-
-    #Not going
-    # def menu():
-    #     '''
-    #     Menu printout on the what they can do
-    #     eg:
-    #     1. Mastery
-    #     2. Ranked Stats
-    #     3. etc.
-    #     4. etc.
-    #     '''
-    #     #TODO: Create menu
-    #     pass
-
-    
-
-
-
 def main(league: League):
     league.set_summoner_id_from_name()
     league.latest_ranked_match()
