@@ -25,12 +25,20 @@ async def on_ready():
     
 
 @bot.command(name="last")
-async def last(ctx, summ_name, region):
-    await send_stats(ctx, summ_name, region)
+async def last(ctx, summ_name, region, match_type = None):
+    #TODO: add support for full or simple
+    #Full = Full match stats (all summoners)
+    #Simple = Simmilar to what we have now, just with more stats.
+    await send_stats(ctx, summ_name, region, match_type)
 
-async def send_stats(ctx, summoner_name, region):
+async def send_stats(ctx, summoner_name, region, match_type):
     league = League()
+
+    #TODO: Check if match_type is none/valid.
+    #Try/Except KeyError using new get/set queue_type
+
     try:
+        #Parse through queue type here as param. 
         match = league.get_latest_normal_match(summoner_name=summoner_name, region=region)
     except NotFoundError as nfe:
         embed = discord.Embed(title="Summoner not found :(")
@@ -60,6 +68,10 @@ async def send_stats(ctx, summoner_name, region):
     embed.set_image(url=player.champion.image.url)
 
     await ctx.send(embed=embed)
+
+
+#TODO: Brainstorm more commands
+
 
 bot.run(TOKEN)
 

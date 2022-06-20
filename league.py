@@ -37,7 +37,7 @@ class League:
             self.set_region(region = region)
             summoner = self.summoner = cass.get_summoner(name=summoner_name, region=self.region)
             self.summ_id, self.puuid = summoner.id, summoner.puuid
-            
+
         # self.latest_ranked_match()
     
     def set_region(self, region):
@@ -65,6 +65,13 @@ Latin America South/LAS
 
     def get_latest_normal_match(self, summoner_name, region) -> cass.core.match.Match:
 
+        #TODO: Change to get_latest_match
+        #Create dictionary based on options of match_type from bot
+        # i.e: {"ranked", cass.Queue.ranked_solo_fives}, with queue variable of course.
+        # Default to normal_draft_fives
+        # Add support for ARAM, Flex, and RGMs
+        # Maybe tft? 
+
         self.set_summoner_id_from_name(summoner_name=summoner_name, region=region)
 
         match_history = cass.get_match_history(
@@ -76,6 +83,8 @@ Latin America South/LAS
 
         return match_history[0]
 
+    #TODO: Create set/get queue_type to make the process of error handling easier,
+    #since set_region can also throw a KeyError
 
     def latest_ranked_match(self) -> cass.core.match.Match:
         print("Getting latest ranked match info...\n")
