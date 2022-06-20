@@ -22,169 +22,28 @@ The 429 status code indicates that the user has sent too many requests
 in a given amount of time ("rate limiting").
 
 
-### Format for participants key
-    "participants": [
-            {
-                "assists": 3,
+### Counter for getting top 10 champs played in last 20 games
 
-                },
-                "champExperience": 19889,
-                "champLevel": 18,
-                "championId": 122,
-                "championName": "Darius",
-                "championTransform": 0,
-                "consumablesPurchased": 4,
-                "damageDealtToBuildings": 2035,
-                "damageDealtToObjectives": 15519,
-                "damageDealtToTurrets": 2035,
-                "damageSelfMitigated": 50817,
-                "deaths": 4,
-                "detectorWardsPlaced": 2,
-                "doubleKills": 1,
-                "dragonKills": 0,
-                "eligibleForProgression": true,
-                "firstBloodAssist": false,
-                "firstBloodKill": false,
-                "firstTowerAssist": true,
-                "firstTowerKill": false,
-                "gameEndedInEarlySurrender": false,
-                "gameEndedInSurrender": false,
-                "goldEarned": 17314,
-                "goldSpent": 17133,
-                "individualPosition": "TOP",
-                "inhibitorKills": 2,
-                "inhibitorTakedowns": 2,
-                "inhibitorsLost": 0,
-                "item0": 3078,
-                "item1": 6333,
-                "item2": 3075,
-                "item3": 3053,
-                "item4": 3742,
-                "item5": 3047,
-                "item6": 3364,
-                "itemsPurchased": 28,
-                "killingSprees": 4,
-                "kills": 15,
-                "lane": "TOP",
-                "largestCriticalStrike": 31,
-                "largestKillingSpree": 5,
-                "largestMultiKill": 3,
-                "longestTimeSpentLiving": 1172,
-                "magicDamageDealt": 5880,
-                "magicDamageDealtToChampions": 502,
-                "magicDamageTaken": 9113,
-                "neutralMinionsKilled": 12,
-                "nexusKills": 0,
-                "nexusLost": 0,
-                "nexusTakedowns": 1,
-                "objectivesStolen": 0,
-                "objectivesStolenAssists": 0,
-                "participantId": 1,
-                "pentaKills": 0,
-                "perks": {
-                    "statPerks": {
-                        "defense": 5002,
-                        "flex": 5008,
-                        "offense": 5005
-                    },
-                    "styles": [
-                        {
-                            "description": "primaryStyle",
-                            "selections": [
-                                {
-                                    "perk": 8010,
-                                    "var1": 647,
-                                    "var2": 0,
-                                    "var3": 0
-                                },
-                                {
-                                    "perk": 9111,
-                                    "var1": 2364,
-                                    "var2": 360,
-                                    "var3": 0
-                                },
-                                {
-                                    "perk": 9105,
-                                    "var1": 17,
-                                    "var2": 20,
-                                    "var3": 0
-                                },
-                                {
-                                    "perk": 8299,
-                                    "var1": 997,
-                                    "var2": 0,
-                                    "var3": 0
-                                }
-                            ],
-                            "style": 8000
-                        },
-                        {
-                            "description": "subStyle",
-                            "selections": [
-                                {
-                                    "perk": 8473,
-                                    "var1": 925,
-                                    "var2": 0,
-                                    "var3": 0
-                                },
-                                {
-                                    "perk": 8242,
-                                    "var1": 87,
-                                    "var2": 0,
-                                    "var3": 0
-                                }
-                            ],
-                            "style": 8400
-                        }
-                    ]
-                },
-                "physicalDamageDealt": 190113,
-                "physicalDamageDealtToChampions": 23822,
-                "physicalDamageTaken": 20899,
-                "profileIcon": 2074,
-                "puuid": "8ZYh7dd02AW4mQJm_qmNhH62g_cwsq6LSimGx0OR0h8O7l3SxQCHODYXhsAK7uW29tPbSt0GSU0E2Q",
-                "quadraKills": 0,
-                "riotIdName": "",
-                "riotIdTagline": "",
-                "role": "SOLO",
-                "sightWardsBoughtInGame": 0,
-                "spell1Casts": 81,
-                "spell2Casts": 114,
-                "spell3Casts": 27,
-                "spell4Casts": 14,
-                "summoner1Casts": 5,
-                "summoner1Id": 4,
-                "summoner2Casts": 7,
-                "summoner2Id": 6,
-                "summonerId": "qJagyKSWhk_kLn0e0x62APPivnrEQicTOLkxiY_DNg95swFa",
-                "summonerLevel": 332,
-                "summonerName": "Davidsonsanches",
-                "teamEarlySurrendered": false,
-                "teamId": 100,
-                "teamPosition": "TOP",
-                "timeCCingOthers": 30,
-                "timePlayed": 2340,
-                "totalDamageDealt": 222618,
-                "totalDamageDealtToChampions": 31726,
-                "totalDamageShieldedOnTeammates": 0,
-                "totalDamageTaken": 41823,
-                "totalHeal": 12318,
-                "totalHealsOnTeammates": 0,
-                "totalMinionsKilled": 224,
-                "totalTimeCCDealt": 195,
-                "totalTimeSpentDead": 205,
-                "totalUnitsHealed": 1,
-                "tripleKills": 1,
-                "trueDamageDealt": 26623,
-                "trueDamageDealtToChampions": 7401,
-                "trueDamageTaken": 11810,
-                "turretKills": 1,
-                "turretTakedowns": 2,
-                "turretsLost": 3,
-                "unrealKills": 0,
-                "visionScore": 38,
-                "visionWardsBoughtInGame": 2,
-                "wardsKilled": 7,
-                "wardsPlaced": 9,
-                "win": true
-            },
+        played_champs = Counter()
+        for match in match_history:
+            match = cass.Match.from_match_reference(match)
+            champion_id = match.participants[self.summoner].champion.id
+            champion_name = champion_id_to_name[champion_id]
+            played_champs[champion_name] += 1
+        
+
+        print("Number of matches played: ", len(match_history))
+
+        print(f"Top 10 Champions played by {self.summoner.name}: ") 
+        for champion_name, count in played_champs.most_common(10):
+            print(champion_name, count)   
+        print()
+
+
+### Match History 
+    match_history = cass.get_match_history(
+                continent = self.summoner.region.continent,
+                puuid = self.puuid,
+                queue = cass.Queue.normal_draft_fives,
+                end_index=4
+            )
