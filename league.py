@@ -1,9 +1,8 @@
 from datapipelines import NotFoundError
 import cassiopeia as cass
+from cassiopeia import Queue
 from collections import Counter
 import arrow
-import discord
-from discord.ext import commands
 
 class League:
     
@@ -62,6 +61,47 @@ Latin America North/LAN
 Latin America South/LAS
         """
 
+    def get_queue_from_str(queue: str = None) -> Queue:
+        queue_dict = {
+            "ranked": Queue.ranked_solo_fives,
+            "flex": Queue.ranked_flex_fives,
+            "solo": Queue.ranked_solo_fives,
+            "duo": Queue.ranked_solo_fives,
+            "solo/duo": Queue.ranked_solo_fives,
+            "normal": Queue.normal_draft_fives,
+            "draft": Queue.normal_draft_fives,
+            "aram": Queue.aram,
+            "clash": Queue.clash
+        }
+
+        if queue == None:
+            return Queue.normal_draft_fives
+        else:
+            return queue_dict[queue.lower()]
+
+    def get_str_from_queue(self, queue) -> str:
+
+        queue_dict = {
+            Queue.ranked_solo_fives: "Ranked Solo/Duo",
+            Queue.ranked_flex_fives: "Ranked Flex",
+            Queue.normal_draft_fives: "Normal Draft",
+            Queue.aram: "ARAM",
+            Queue.clash: "Clash"
+        }
+
+        return queue_dict[queue]
+
+
+    def get_latest_match(self, summoner_name, region, queue: Queue) -> cass.core.match.Match:
+        self.set_summoner_id_from_name(summoner_name=summoner_name, region=region)
+        match_history = cass.get_match_history(
+            continent = self.summoner.region.continent,
+            puuid = self.puuid,
+            queue = queue,
+            end_index=2
+        )
+
+        return match_history[0]
 
     def get_latest_normal_match(self, summoner_name, region) -> cass.core.match.Match:
 
@@ -77,9 +117,11 @@ Latin America South/LAS
         match_history = cass.get_match_history(
             continent = self.summoner.region.continent,
             puuid = self.puuid,
-            queue = cass.Queue.normal_draft_fives,
+            queue = cass.Queue.ranked_solo_fives,
             end_index=4
         )
+
+        print(self.summoner.id)
 
         return match_history[0]
 
@@ -92,7 +134,7 @@ Latin America South/LAS
         match_history = cass.get_match_history(
             continent = self.summoner.region.continent,
             puuid = self.puuid,
-            queue = cass.Queue.normal_draft_fives,
+            queue = cass.Queue.ranked_solo_fives,
             end_index=4
         )
 
@@ -105,10 +147,3 @@ Latin America South/LAS
         match = match_history[0]
         
         return match
-
-def main(league: League):
-    league.set_summoner_id_from_name()
-    league.latest_ranked_match()
-
-
-
