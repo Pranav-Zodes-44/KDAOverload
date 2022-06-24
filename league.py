@@ -1,7 +1,9 @@
 from datapipelines import NotFoundError
 import cassiopeia as cass
+from cassiopeia import Queue
 from collections import Counter
 import arrow
+
 class League:
     
     regions = {"NA":"NA", "NORTH AMERICA":"NA",
@@ -29,142 +31,119 @@ class League:
             api_key = f.readlines()[0].strip()
         return api_key
 
-    def set_summoner_id_from_name(self):
-        while True:
-            try:
-                summoner_name: str = str(input("Summoner name: "))
-                self.set_region()
-                summoner = self.summoner = cass.get_summoner(name=summoner_name, region=self.region)
-                self.summ_id, self.puuid = summoner.id, summoner.puuid
-                break
-            except NotFoundError as NFerr:
-                print("\nThat's a ridiculous name! Please enter a valid summoner name...\n")
-                continue
-            # except ApiError as err:
-            #     if err.response.status_code == 429:
-            #         print('We should retry in {} seconds.'.format(err.headers['Retry-After']))
-            #         print('this retry-after is handled by default by the RiotWatcher library')
-            #         print('future requests wait until the retry-after time passes')
-            #     elif err.response.status_code == 404:
-            #         print('Summoner with that ridiculous name not found.')
-            #         print('Please make sure the name you entered is correct \n')
-            #         continue
-            #     else:
-            #         raise
+    def set_summoner_id_from_name(self, summoner_name, region):
+
+            self.set_region(region = region)
+            summoner = self.summoner = cass.get_summoner(name=summoner_name, region=self.region)
+            self.summ_id, self.puuid = summoner.id, summoner.puuid
+
         # self.latest_ranked_match()
     
-    def set_region(self):
-        while True:
-            region_in = input("Summoner region: ")
-            #TODO: Change to dictionary
-            try:
-                self.region = self.regions[region_in.upper()]
-                break
-            except KeyError as e:
-                print("Invalid region, please enter one of the following regions: \n")
-                self.print_regions()
-                continue
+    def set_region(self, region):
 
-    def print_regions(self):
+        self.region = self.regions[region.upper()]
+
+    def get_regions(self):
         
         # TODO: Print all the regions that are available for input
-        print("""
-        North America/NA
-        Europe West/EUW
-        Europe Nordic & East/EUN/EUNE
-        Korea/KR
-        Brazil/BR
-        Japan/JP
-        Russia/RU
-        Oceania/OCE/OC
-        Turkey/TR
-        Latin America North/LAN
-        Latin America South/LAS
-        """)
-        
-        pass
+        return """
+Available regions:
+North America/NA
+Europe West/EUW
+Europe Nordic & East/EUN/EUNE
+Korea/KR
+Brazil/BR
+Japan/JP
+Russia/RU
+Oceania/OCE/OC
+Turkey/TR
+Latin America North/LAN
+Latin America South/LAS
+        """
 
-    def latest_ranked_match(self):
+    def get_queue_from_str(queue: str = None) -> Queue:
+        queue_dict = {
+            "ranked": Queue.ranked_solo_fives,
+            "flex": Queue.ranked_flex_fives,
+            "solo": Queue.ranked_solo_fives,
+            "duo": Queue.ranked_solo_fives,
+            "solo/duo": Queue.ranked_solo_fives,
+            "normal": Queue.normal_draft_fives,
+            "draft": Queue.normal_draft_fives,
+            "aram": Queue.aram,
+            "clash": Queue.clash
+        }
+
+        if queue == None:
+            return Queue.normal_draft_fives
+        else:
+            return queue_dict[queue.lower()]
+
+    def get_str_from_queue(self, queue) -> str:
+
+        queue_dict = {
+            Queue.ranked_solo_fives: "Ranked Solo/Duo",
+            Queue.ranked_flex_fives: "Ranked Flex",
+            Queue.normal_draft_fives: "Normal Draft",
+            Queue.aram: "ARAM",
+            Queue.clash: "Clash"
+        }
+
+        return queue_dict[queue]
+
+
+    def get_latest_match(self, summoner_name, region, queue: Queue) -> cass.core.match.Match:
+        self.set_summoner_id_from_name(summoner_name=summoner_name, region=region)
+        match_history = cass.get_match_history(
+            continent = self.summoner.region.continent,
+            puuid = self.puuid,
+            queue = queue,
+            end_index=2
+        )
+
+        return match_history[0]
+
+    def get_latest_normal_match(self, summoner_name, region) -> cass.core.match.Match:
+
+        #TODO: Change to get_latest_match
+        #Create dictionary based on options of match_type from bot
+        # i.e: {"ranked", cass.Queue.ranked_solo_fives}, with queue variable of course.
+        # Default to normal_draft_fives
+        # Add support for ARAM, Flex, and RGMs
+        # Maybe tft? 
+
+        self.set_summoner_id_from_name(summoner_name=summoner_name, region=region)
+
+        match_history = cass.get_match_history(
+            continent = self.summoner.region.continent,
+            puuid = self.puuid,
+            queue = cass.Queue.ranked_solo_fives,
+            end_index=4
+        )
+
+        print(self.summoner.id)
+
+        return match_history[0]
+
+    #TODO: Create set/get queue_type to make the process of error handling easier,
+    #since set_region can also throw a KeyError
+
+    def latest_ranked_match(self) -> cass.core.match.Match:
         print("Getting latest ranked match info...\n")
 
         match_history = cass.get_match_history(
             continent = self.summoner.region.continent,
             puuid = self.puuid,
             queue = cass.Queue.ranked_solo_fives,
-            begin_time=arrow.Arrow(2022, 6, 13)
+            end_index=4
         )
 
-        champion_id_to_name = {
-            champion.id: champion.name for champion in cass.get_champions(region=self.region)
-        }
+        # champion_id_to_name = {
+        #     champion.id: champion.name for champion in cass.get_champions(region=self.region)
+        # }
 
-        played_champs = Counter()
 
-        for match in match_history:
-            champion_id = match.participants[self.summoner].champion.id
-            champion_name = champion_id_to_name[champion_id]
-            played_champs[champion_name] += 1
-        
-        print("\033c", end="")
-
-        print("Number of matches played: ", len(match_history))
-
-        print(f"Top 10 Champions played by {self.summoner.name}: ") 
-        for champion_name, count in played_champs.most_common(10):
-            print(champion_name, count)   
-        print()
 
         match = match_history[0]
-        print("Match ID: ", match.id)
-        print()
-
-        # for x, participant in enumerate(match.participants):
-        #     print(participant.summoner.name, "playing", participant.champion.name, participant.win)
-        #     if x == 9:
-        #         break
-
-        print("Blue team win: ", match.blue_team.win)
-        for participant in match.blue_team.participants:
-            print(participant.summoner.name, "playing", participant.champion.name)
-
-        print("\nRed team win: ", match.red_team.win)
-        for participant in match.red_team.participants:
-            print(participant.summoner.name, "playing", participant.champion.name)
-        print()
-
-
-        # latest_match_id = self.lol_watcher.match.matchlist_by_puuid(self.region, self.puuid, type='ranked')[0]
-        # latest_match_info = self.lol_watcher.match.by_id(self.region, latest_match_id)
-        # date = time.strftime('%A, %B %e, %Y - %H:%M',time.localtime(latest_match_info['info']['gameStartTimestamp']))
-        # print(f"Match date: {date}\n")
-        # participants = latest_match_info['info']['participants']
-        # for participant in participants:
-        #     print(f"Summoner name: {participant['summonerName']}")
-        #     print(f"    Champion: {participant['championName']}")
-        #     print(f"    Kills: {participant['kills']}")
-        #     print(f"    Deaths: {participant['deaths']}")
-        #     print(f"    Assits: {participant['assists']}")
-        #     print()
-
-    def menu():
-        '''
-        Menu printout on the what they can do
-        eg:
-        1. Mastery
-        2. Ranked Stats
-        3. etc.
-        4. etc.
-        '''
-        #TODO: Create menu
-        pass
-
-    
-
-
-
-def main(league: League):
-    league.set_summoner_id_from_name()
-    league.latest_ranked_match()
-
-
-
+        
+        return match
