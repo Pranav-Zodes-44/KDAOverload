@@ -30,7 +30,6 @@ async def last(ctx, summ_name=None, region=None, queue_type = None):
     #TODO: add support for full or simple
     #Full = Full match stats (all summoners)
     #Simple = Simmilar to what we have now, just with more stats.
-
     if summ_name == None and region == None:
         embed = discord.Embed(title="Not enough arguments provided",
         description= """
@@ -86,19 +85,18 @@ async def send_stats(ctx, summoner_name, region, queue_type):
         lp = player.summoner.league_entries.fives.league_points
 
     queue_str = league.get_str_from_queue(queue=queue)
-
-    #TODO:Get op.gg profile using region and summoner name for set_author
-    # ^ op.gg/summoners/euw/Bodiez
+    
     embed = discord.Embed(title=f"Latest {queue_str} match", description=f"""
     **Champion**: {player.champion.name}\n
     **Kills**: {player.stats.kills}\n
     **Deaths**: {player.stats.deaths}\n
     **Assists**: {player.stats.assists}\n
         """)
-    embed.set_author(name=summoner_name, icon_url=player.summoner.profile_icon.url)
+    embed.set_author(name=summoner_name, icon_url=player.summoner.profile_icon.url, 
+                        url=f"https://op.gg/summoners/{league.region.lower()}/{summoner_name}")
     embed.set_image(url=player.champion.image.url)
     embed.set_footer(text=f"Level: {player.summoner.level} || Solo/Duo Rank: {rank.tier} {rank.division} {lp}LP")
-
+    
     await ctx.send(embed=embed)
 
 
