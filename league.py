@@ -62,7 +62,7 @@ Latin America North/LAN
 Latin America South/LAS
         """
 
-    def get_queue_from_str(queue: str = None) -> Queue:
+    def get_queue_from_str(self, queue: str = None) -> Queue:
         queue_dict = {
             "ranked": Queue.ranked_solo_fives,
             "flex": Queue.ranked_flex_fives,

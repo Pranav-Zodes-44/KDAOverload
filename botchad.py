@@ -1,5 +1,7 @@
+from sys import prefix
 from datapipelines import NotFoundError
 import discord
+from discord.embeds import Embed
 from discord.ext import commands
 import cassiopeia as cass
 from cassiopeia import Queue
@@ -12,31 +14,60 @@ with open('config.txt', 'r') as f:
     
 cass.set_riot_api_key(RIOT_TOKEN)
 
-bot = commands.Bot(command_prefix='!!')
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix = commands.when_mentioned_or("!!"), intents = intents)
+ids = []
+
+
 
 @bot.event
 async def on_ready():
-    guild = None
-    for guild_ in bot.guilds:
-        if "test" in guild_.name:
-            guild = guild_
+    global ids
+    ids = [guild.id for guild in bot.guilds]
 
-    print(f"{bot.user} is connected to the following guild \n")
-    print(f"{guild.name} ID: {guild.id}")
-    
+    print("Bot connected.")
 
-@bot.command(name="match_history", brief = "Shows your last 10 matches played. Defaulted to normal draft.")
-async def match_history():
+@bot.command(name="match_history", description= "Shows your last 10 matches played. Defaulted to normal draft.")
+async def match_history(ctx, summoner_name = None, region = None, queue_type = None):
+
+    if summoner_name == None and region == None:
+        embed = discord.Embed(title="Not enough arguments provided",
+        description= """
+    You left out your summoner name and region :( 
+
+    Correct format: **!!last [summoner_name] [region]**""")
+        await ctx.send(embed=embed)
+        return
+    elif region == None:
+        embed = discord.Embed(title="You left out the region!", description="Correct format: **!!last [summoner_name] [region]**")
+        await invalid_region(ctx, League(), embed)
+        return
+
+    await ctx.send("Getting match history... Give me a second, this takes some time ;_;")
+
     league = League()
 
-    matches = league.get_match_history()
+    queue = league.get_queue_from_str(queue=queue_type)
+    queue_str = league.get_str_from_queue(queue=queue)
 
-    
+    matches = league.get_match_history(summoner_name=summoner_name, region=region, queue=queue)
 
-    return
+    description = ""
 
-@bot.command(name="last", brief = "Shows your last match played. Defaulted to normal draft.", 
-            description="Shows your last match played. Defaulted to normal draft.\n Queue types: ranked/solo/duo, flex, normal/draft, aram, clash.")
+    # match = league.get_latest_match(summoner_name=summoner_name, region=region, queue=queue)
+    for i in range(10):
+        p = league.get_player_from_match(match=matches[i], summoner_name=summoner_name)
+        if p.team.win:
+            result = ":white_check_mark:"
+        else:
+            result = ":x:"
+        description += f"{result} Champion: {p.champion.name} | KDA: {p.stats.kills}/{p.stats.deaths}/{p.stats.assists}\n"
+
+    embed = discord.Embed(title=f"{queue_str} Match History", description=description)
+    await ctx.send(embed=embed)
+
+@bot.command(name="last", 
+            description="Shows your last match played. Defaulted to normal draft.")
 async def last(ctx, summ_name=None, region=None, queue_type = None):
 
     #TODO: add support for full or simple
@@ -44,7 +75,7 @@ async def last(ctx, summ_name=None, region=None, queue_type = None):
     #Simple = Simmilar to what we have now, just with more stats.
 
     if summ_name == None and region == None:
-        embed = discord.Embed(title="Not enough arguments provided",
+        embed = Embed(title="Not enough arguments provided",
         description= """
     You left out your summoner name and region :( 
 
@@ -64,14 +95,14 @@ One moment please... :clock:""")
 async def send_stats_simple(ctx, summoner_name, region, queue_type):
     league = League()
 
-    queue: cass.Queue = League.get_queue_from_str(queue=queue_type)
+    queue: cass.Queue = league.get_queue_from_str(queue=queue_type)
 
     try:
         match = league.get_latest_match(summoner_name=summoner_name, region=region, queue=queue)
     except NotFoundError as nfe:
         embed = discord.Embed(title="Summoner not found :(")
         embed.set_image(url="https://media.giphy.com/media/6uGhT1O4sxpi8/giphy.gif")
-        await ctx.send(embed=embed)
+        await ctx.send(embeds=[embed])
         return
     except KeyError as ke:
         embed = discord.Embed(title="That's a wacky region you've entered there...", 
