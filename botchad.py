@@ -26,14 +26,41 @@ async def on_ready():
     
 
 @bot.command(name="match_history", brief = "Shows your last 10 matches played. Defaulted to normal draft.")
-async def match_history():
+async def match_history(ctx, summoner_name = None, region = None, queue_type = None):
+
+    if summoner_name == None and region == None:
+        embed = discord.Embed(title="Not enough arguments provided",
+        description= """
+    You left out your summoner name and region :( 
+
+    Correct format: **!!last [summoner_name] [region]**""")
+        await ctx.send(embed=embed)
+        return
+    elif region == None:
+        embed = discord.Embed(title="You left out the region!", description="Correct format: **!!last [summoner_name] [region]**")
+        await invalid_region(ctx, League(), embed)
+        return
+
     league = League()
 
-    matches = league.get_match_history()
+    queue = league.get_queue_from_str(queue=queue_type)
+    queue_str = league.get_str_from_queue(queue=queue)
 
-    
+    matches = league.get_match_history(summoner_name=summoner_name, region=region, queue=queue)
 
-    return
+    description = ""
+
+    # match = league.get_latest_match(summoner_name=summoner_name, region=region, queue=queue)
+    for i in range(10):
+        p = league.get_player_from_match(match=matches[i], summoner_name=summoner_name)
+        if p.team.win:
+            result = ":white_check_mark:"
+        else:
+            result = ":x:"
+        description += f"{result} Champion: {p.champion.name} | KDA: {p.stats.kills}/{p.stats.deaths}/{p.stats.assists}\n"
+
+    embed = discord.Embed(title=f"{queue_str} Match History", description=description)
+    await ctx.send(embed=embed)
 
 @bot.command(name="last", brief = "Shows your last match played. Defaulted to normal draft.", 
             description="Shows your last match played. Defaulted to normal draft.\n Queue types: ranked/solo/duo, flex, normal/draft, aram, clash.")
@@ -64,7 +91,7 @@ One moment please... :clock:""")
 async def send_stats_simple(ctx, summoner_name, region, queue_type):
     league = League()
 
-    queue: cass.Queue = League.get_queue_from_str(queue=queue_type)
+    queue: cass.Queue = league.get_queue_from_str(queue=queue_type)
 
     try:
         match = league.get_latest_match(summoner_name=summoner_name, region=region, queue=queue)
