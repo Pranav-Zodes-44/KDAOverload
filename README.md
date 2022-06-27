@@ -7,7 +7,10 @@ Currently using ~~RiotWatcher~~ [Cassiopeia](https://github.com/meraki-analytics
 
 Going to play around with using [RiotWatcher](https://github.com/pseudonym117/Riot-Watcher) as well.
 
-RIOT_API and Discord bot API key is not available for public use.
+||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+
+### RIOT_API and Discord bot API key is not available for public use.
 
 If you'd like to use this bot yourself, follow these steps:
 
