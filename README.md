@@ -3,7 +3,8 @@ Get specific stats based on certain Riot games from your account, only using you
 
 Features added so far: Getting latest LoL Ranked Match info (Summoners, champion played, k/d/a)
 
-Currently using RiotWatcher API to assist with using the Riot API
+Currently using ~~RiotWatcher~~ [Cassiopeia](https://github.com/meraki-analytics/cassiopeia) API framework to assist with the Riot API requests.
+Going to play around with using [RiotWatcher](https://github.com/pseudonym117/Riot-Watcher) as well.
 
 RIOT_API and Discord bot API key is not available for public use.
 
