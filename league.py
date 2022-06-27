@@ -1,6 +1,8 @@
+from nis import match
+from attr import Attribute
 from datapipelines import NotFoundError
 import cassiopeia as cass
-from cassiopeia import Queue
+from cassiopeia import Queue, Match
 from collections import Counter
 import arrow
 
@@ -47,7 +49,6 @@ class League:
         
         # TODO: Print all the regions that are available for input
         return """
-Available regions:
 North America/NA
 Europe West/EUW
 Europe Nordic & East/EUN/EUNE
@@ -74,10 +75,12 @@ Latin America South/LAS
             "clash": Queue.clash
         }
 
-        if queue == None:
-            return Queue.normal_draft_fives
-        else:
+        try:
             return queue_dict[queue.lower()]
+        except KeyError as ke:
+            return Queue.normal_draft_fives
+        except AttributeError as ae:
+            return Queue.normal_draft_fives
 
     def get_str_from_queue(self, queue) -> str:
 
@@ -102,48 +105,21 @@ Latin America South/LAS
         )
 
         return match_history[0]
+    
+    def get_player_from_match(self, match, summoner_name) -> cass.core.match.Participant:
+        for p in match.participants:
+            if p.summoner.name == summoner_name:
+                return p
 
-    def get_latest_normal_match(self, summoner_name, region) -> cass.core.match.Match:
-
-        #TODO: Change to get_latest_match
-        #Create dictionary based on options of match_type from bot
-        # i.e: {"ranked", cass.Queue.ranked_solo_fives}, with queue variable of course.
-        # Default to normal_draft_fives
-        # Add support for ARAM, Flex, and RGMs
-        # Maybe tft? 
-
+    def get_match_history(self, summoner_name, region, queue: Queue):
         self.set_summoner_id_from_name(summoner_name=summoner_name, region=region)
-
         match_history = cass.get_match_history(
             continent = self.summoner.region.continent,
             puuid = self.puuid,
-            queue = cass.Queue.ranked_solo_fives,
-            end_index=4
+            queue = queue,
+            end_index=10
         )
-
-        print(self.summoner.id)
-
-        return match_history[0]
+        return match_history
 
     #TODO: Create set/get queue_type to make the process of error handling easier,
     #since set_region can also throw a KeyError
-
-    def latest_ranked_match(self) -> cass.core.match.Match:
-        print("Getting latest ranked match info...\n")
-
-        match_history = cass.get_match_history(
-            continent = self.summoner.region.continent,
-            puuid = self.puuid,
-            queue = cass.Queue.ranked_solo_fives,
-            end_index=4
-        )
-
-        # champion_id_to_name = {
-        #     champion.id: champion.name for champion in cass.get_champions(region=self.region)
-        # }
-
-
-
-        match = match_history[0]
-        
-        return match
