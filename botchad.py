@@ -15,17 +15,58 @@ with open('config.txt', 'r') as f:
 cass.set_riot_api_key(RIOT_TOKEN)
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix = commands.when_mentioned_or("!!"), intents = intents)
-ids = []
+bot = commands.Bot(command_prefix=commands.when_mentioned_or("!!"), intents = intents)
 
-
+regions = ["EUW", "EUNE", "NA", "BR", "TR", "LAN", "LAS", "JP", "KR", "RU", "OCE"]
+queue_types = ["normal", "flex", "solo/duo", "aram", "clash"]
 
 @bot.event
 async def on_ready():
-    global ids
-    ids = [guild.id for guild in bot.guilds]
 
     print("Bot connected.")
+
+@bot.slash_command(
+    name="match-history", 
+    description= "Shows your last 10 matches played. Defaulted to normal draft.", 
+    guild_ids = [852520045359005716, 400008732425191427]
+    )
+async def slash_match_history(
+    ctx: discord.ApplicationContext, 
+    summoner_name: discord.Option(name ="summoner-name", input_type=str, description="Your summoner name", required = True), 
+    region: discord.Option(name= "region", input_type=str, description="The region you play on", required = True, choices = regions),
+    queue_type: discord.Option(name="queue-type", input_type=str, description="Which queue you want to get your match history from.", required = True, choices = queue_types)
+    ):
+
+    #TODO Create seperate slash command and normal command of each command.
+    
+    if region == None:
+        embed = discord.Embed(title="You left out the region!", description="Correct format: **!!last [summoner_name] [region]**")
+        await invalid_region(ctx, League(), embed)
+        return
+
+    await ctx.respond("Getting match history... Give me a second, this takes some time ;_;")
+
+    league = League()
+
+    queue = league.get_queue_from_str(queue=queue_type)
+    queue_str = league.get_str_from_queue(queue=queue)
+
+    matches = league.get_match_history(summoner_name=summoner_name, region=region, queue=queue)
+
+    description = ""
+
+    # match = league.get_latest_match(summoner_name=summoner_name, region=region, queue=queue)
+    for i in range(10):
+        p = league.get_player_from_match(match=matches[i], summoner_name=summoner_name)
+        if p.team.win:
+            result = ":white_check_mark:"
+        else:
+            result = ":x:"
+        description += f"{result} Champion: {p.champion.name} | KDA: {p.stats.kills}/{p.stats.deaths}/{p.stats.assists}\n"
+
+    embed = discord.Embed(title=f"{queue_str} Match History", description=description)
+    embed = set_embed_author(p, embed, league)
+    await ctx.send(embed=embed)
 
 @bot.command(name="match_history", description= "Shows your last 10 matches played. Defaulted to normal draft.")
 async def match_history(ctx, summoner_name = None, region = None, queue_type = None):
@@ -64,6 +105,7 @@ async def match_history(ctx, summoner_name = None, region = None, queue_type = N
         description += f"{result} Champion: {p.champion.name} | KDA: {p.stats.kills}/{p.stats.deaths}/{p.stats.assists}\n"
 
     embed = discord.Embed(title=f"{queue_str} Match History", description=description)
+    embed = set_embed_author(p, embed, league)
     await ctx.send(embed=embed)
 
 @bot.command(name="last", 
@@ -124,11 +166,11 @@ async def send_stats_simple(ctx, summoner_name, region, queue_type):
 async def invalid_region(ctx, league: League, embed):
     embed.add_field(name="Regions", value=league.get_regions(), inline=False)
     embed.set_image(url="https://media.giphy.com/media/EjgA32SgtLpYAz2ZfB/giphy-downsized-large.gif")
+    if (type(ctx) == discord.ApplicationContext):
+        await ctx.respond(f"No region.")
     await ctx.send(embed=embed)
 
 def get_embed_last(queue_str, player, league: League):
-
-    opgg = f"https://op.gg/summoners/{league.region.lower()}/{player.summoner.name}"
 
     embed = discord.Embed(title=f"Latest {queue_str} match", description=f"""
     **Champion**: {player.champion.name}\n
@@ -136,12 +178,20 @@ def get_embed_last(queue_str, player, league: League):
     **Deaths**: {player.stats.deaths}\n
     **Assists**: {player.stats.assists}\n
         """)
-    embed.set_author(name=player.summoner.name, icon_url=player.summoner.profile_icon.url, 
-                        url=opgg)
-    embed.set_image(url=player.champion.image.url)
+    embed = set_embed_author(player, embed, league)
+    embed = set_embed_image(player, embed=embed)
 
     return embed
 
+def set_embed_author(player, embed: discord.Embed, league: League):
+    opgg = f"https://op.gg/summoners/{league.region.lower()}/{player.summoner.name}"
+    embed.set_author(name=player.summoner.name, icon_url=player.summoner.profile_icon.url, 
+                        url=opgg)
+    return embed
+
+def set_embed_image(player, embed: discord.Embed):
+    embed.set_image(url=player.champion.image.url)
+    return embed
 
 def get_footer_text(queue: Queue, player):
     try:
