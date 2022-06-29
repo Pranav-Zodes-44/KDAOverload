@@ -94,7 +94,6 @@ async def match_history(ctx, summoner_name = None, region = None, queue_type = N
 
     description = ""
 
-    # match = league.get_latest_match(summoner_name=summoner_name, region=region, queue=queue)
     for i in range(10):
         p = league.get_player_from_match(match=matches[i], summoner_name=summoner_name)
         if p.team.win:
