@@ -1,4 +1,3 @@
-from sys import prefix
 from datapipelines import NotFoundError
 import discord
 from discord.embeds import Embed
@@ -35,10 +34,8 @@ async def slash_match_history(
     summoner_name: discord.Option(name ="summoner-name", input_type=str, description="Your summoner name", required = True), 
     region: discord.Option(name= "region", input_type=str, description="The region you play on", required = True, choices = regions),
     queue_type: discord.Option(name="queue-type", input_type=str, description="Which queue you want to get your match history from.", required = True, choices = queue_types)
-    ):
+):
 
-    #TODO Create seperate slash command and normal command of each command.
-    
     if region == None:
         embed = discord.Embed(title="You left out the region!", description="Correct format: **!!last [summoner_name] [region]**")
         await invalid_region(ctx, League(), embed)
@@ -66,6 +63,8 @@ async def slash_match_history(
 
     embed = discord.Embed(title=f"{queue_str} Match History", description=description)
     embed = set_embed_author(p, embed, league)
+    embed.set_footer(text = get_footer_text(queue=queue, player=p))
+    
     await ctx.send(embed=embed)
 
 @bot.command(name="match_history", description= "Shows your last 10 matches played. Defaulted to normal draft.")
@@ -106,7 +105,36 @@ async def match_history(ctx, summoner_name = None, region = None, queue_type = N
 
     embed = discord.Embed(title=f"{queue_str} Match History", description=description)
     embed = set_embed_author(p, embed, league)
+    embed.set_footer(text = get_footer_text(queue=queue, player=p))
+
     await ctx.send(embed=embed)
+
+
+@bot.slash_command(name="last", 
+            description="Shows your last match played. Defaulted to normal draft.",
+            guild_ids = [852520045359005716, 400008732425191427]
+            )
+async def slash_last(
+    ctx: discord.ApplicationContext, 
+    summoner_name: discord.Option(name ="summoner-name", input_type=str, description="Your summoner name", required = True), 
+    region: discord.Option(name= "region", input_type=str, description="The region you play on", required = True, choices = regions),
+    queue_type: discord.Option(name="queue-type", input_type=str, description="Which queue you want to get your match history from.", required = True, choices = queue_types)
+):
+   
+    if summoner_name == None:
+        ctx.respond("No summoner name.")
+
+    if region == None:
+        embed = discord.Embed(title="You left out the region!", description="Correct format: **!!last [summoner_name] [region]**")
+        await ctx.respond("No region")
+        await invalid_region(ctx, League(), embed)
+        return
+
+    await ctx.respond("""
+Getting the data from your last match.
+One moment please... :clock:""")
+    await send_stats_simple(ctx, summoner_name, region, queue_type)
+
 
 @bot.command(name="last", 
             description="Shows your last match played. Defaulted to normal draft.")
@@ -124,7 +152,7 @@ async def last(ctx, summ_name=None, region=None, queue_type = None):
     Correct format: **!!last [summoner_name] [region]**""")
         await ctx.send(embed=embed)
         return
-    elif region == None:
+    if region == None:
         embed = discord.Embed(title="You left out the region!", description="Correct format: **!!last [summoner_name] [region]**")
         await invalid_region(ctx, League(), embed)
         return
