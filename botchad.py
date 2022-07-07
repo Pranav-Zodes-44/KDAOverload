@@ -1,3 +1,4 @@
+from dis import disco
 from datapipelines import NotFoundError
 import discord
 from discord.embeds import Embed
@@ -5,6 +6,8 @@ from discord.ext import commands
 import cassiopeia as cass
 from cassiopeia import Queue
 from league import League
+import arrow
+import zoneinfo
 
 with open('config.txt', 'r') as f:
     tokens = f.readlines()
@@ -14,14 +17,14 @@ with open('config.txt', 'r') as f:
 cass.set_riot_api_key(RIOT_TOKEN)
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix=commands.when_mentioned_or("!!"), intents = intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or("!!"), intents = intents, debug_guilds = [852520045359005716, 400008732425191427])
 
 regions = ["EUW", "EUNE", "NA", "BR", "TR", "LAN", "LAS", "JP", "KR", "RU", "OCE"]
 queue_types = ["normal", "flex", "solo/duo", "aram", "clash"]
 
 @bot.event
 async def on_ready():
-
+    print(f"URL: {discord.utils.oauth_url(client_id=994350658440413234, permissions=discord.Permissions(8), scopes=('bot', 'application.commands'))}")
     print("Bot connected.")
 
 @bot.slash_command(
@@ -109,11 +112,10 @@ async def match_history(ctx, summoner_name = None, region = None, queue_type = N
     await ctx.send(embed=embed)
 
 
-@bot.slash_command(name="last", 
-            description="Shows your last match played. Defaulted to normal draft.",
-            guild_ids = [852520045359005716, 400008732425191427]
-            )
-async def slash_last(
+last = bot.create_group("last","Shows your last match played. Defaulted to normal draft.")
+
+@last.command(description="Shows a simplified version of your last match. Defaulted to normal draft.")
+async def simple(
     ctx: discord.ApplicationContext, 
     summoner_name: discord.Option(name ="summoner-name", input_type=str, description="Your summoner name", required = True), 
     region: discord.Option(name= "region", input_type=str, description="The region you play on", required = True, choices = regions),
@@ -132,36 +134,19 @@ async def slash_last(
     await ctx.respond("""
 Getting the data from your last match.
 One moment please... :clock:""")
-    await send_stats_simple(ctx, summoner_name, region, queue_type)
+    await send_stats(ctx, summoner_name, region, queue_type, full = False)
 
+@last.command(description="Shows a detailed version of your last match. Defaulted to normal draft.")
+async def full(
+    ctx: discord.ApplicationContext, 
+    summoner_name: discord.Option(name ="summoner-name", input_type=str, description="Your summoner name", required = True), 
+    region: discord.Option(name= "region", input_type=str, description="The region you play on", required = True, choices = regions),
+    queue_type: discord.Option(name="queue-type", input_type=str, description="Which queue you want to get your match history from.", required = True, choices = queue_types)
+    ):
 
-@bot.command(name="last", 
-            description="Shows your last match played. Defaulted to normal draft.")
-async def last(ctx, summ_name=None, region=None, queue_type = None):
+    pass
 
-    #TODO: add support for full or simple
-    #Full = Full match stats (all summoners)
-    #Simple = Simmilar to what we have now, just with more stats.
-
-    if summ_name == None and region == None:
-        embed = Embed(title="Not enough arguments provided",
-        description= """
-    You left out your summoner name and region :( 
-
-    Correct format: **!!last [summoner_name] [region]**""")
-        await ctx.send(embed=embed)
-        return
-    if region == None:
-        embed = discord.Embed(title="You left out the region!", description="Correct format: **!!last [summoner_name] [region]**")
-        await invalid_region(ctx, League(), embed)
-        return
-
-    await ctx.send("""
-Getting the data from your last match.
-One moment please... :clock:""")
-    await send_stats_simple(ctx, summ_name, region, queue_type)
-
-async def send_stats_simple(ctx, summoner_name, region, queue_type):
+async def send_stats(ctx, summoner_name, region, queue_type, full: bool):
     league = League()
 
     queue: cass.Queue = league.get_queue_from_str(queue=queue_type)
@@ -180,15 +165,12 @@ async def send_stats_simple(ctx, summoner_name, region, queue_type):
         return
 
     player = league.get_player_from_match(match=match, summoner_name=summoner_name)
-
-    queue_str = league.get_str_from_queue(queue=queue)
-    
-    embed = get_embed_last(queue_str, player, league)
-    
-    embed.set_footer(text=get_footer_text(queue=queue, player=player))
+    if full == True:
+        embed = get_embed_last_full(queue, player, match, league)
+    else:
+        embed = get_embed_last_simple(queue, player, match, league)
     
     await ctx.send(embed=embed)
-
 
 async def invalid_region(ctx, league: League, embed):
     embed.add_field(name="Regions", value=league.get_regions(), inline=False)
@@ -197,8 +179,25 @@ async def invalid_region(ctx, league: League, embed):
         await ctx.respond(f"No region.")
     await ctx.send(embed=embed)
 
-def get_embed_last(queue_str, player, league: League):
+def get_embed_last_simple(queue, player: cass.core.match.Participant, match: cass.Match, league: League):
+    queue_str = league.get_str_from_queue(queue=queue)
+    result = "Win :white_check_mark:" if player.team.win else "Loss :x:"
+    embed = discord.Embed(title=f"Latest {queue_str} match", description=f"""
+    **Match start**: {match.start.shift(hours=+2).format('DD-MMMM-YYYY HH:mm UTC+02')}\n
+    **Champion**: {player.champion.name}\n
+    **Kills**: {player.stats.kills}\n
+    **Deaths**: {player.stats.deaths}\n
+    **Assists**: {player.stats.assists}\n
+    **Result**: {result}
+        """)
+    embed = set_embed_author(player, embed, league)
+    embed = set_embed_image(player, embed=embed)
+    embed.set_footer(text=get_footer_text(queue=queue, player=player))
 
+    return embed
+
+def get_embed_last_full(queue, player, match, league: League):
+    queue_str = league.get_str_from_queue(queue=queue)
     embed = discord.Embed(title=f"Latest {queue_str} match", description=f"""
     **Champion**: {player.champion.name}\n
     **Kills**: {player.stats.kills}\n
@@ -207,6 +206,7 @@ def get_embed_last(queue_str, player, league: League):
         """)
     embed = set_embed_author(player, embed, league)
     embed = set_embed_image(player, embed=embed)
+    embed.set_footer(text=get_footer_text(queue=queue, player=player))
 
     return embed
 
@@ -239,7 +239,6 @@ def get_footer_text(queue: Queue, player):
             return f"Level: {player.summoner.level} || Unranked"
 
 #TODO: Brainstorm more commands
-
 
 bot.run(TOKEN)
 
