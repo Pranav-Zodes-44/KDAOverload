@@ -95,7 +95,7 @@ Latin America South/LAS
         return queue_dict[queue]
 
 
-    def get_latest_match(self, summoner_name, region, queue: Queue) -> cass.core.match.Match:
+    def latest_match(self, summoner_name, region, queue: Queue) -> cass.core.match.Match:
         self.set_summoner_id_from_name(summoner_name=summoner_name, region=region)
         match_history = cass.get_match_history(
             continent = self.summoner.region.continent,
@@ -103,6 +103,8 @@ Latin America South/LAS
             queue = queue,
             end_index=2
         )
+         
+        match_history[0].kills_heatmap()
 
         return match_history[0]
     
