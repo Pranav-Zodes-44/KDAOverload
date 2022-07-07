@@ -104,8 +104,6 @@ Latin America South/LAS
             end_index=2
         )
          
-        match_history[0].kills_heatmap()
-
         return match_history[0]
     
     def get_player_from_match(self, match, summoner_name) -> cass.core.match.Participant:
