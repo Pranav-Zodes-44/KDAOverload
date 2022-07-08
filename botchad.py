@@ -25,10 +25,6 @@ queue_types = ["normal", "flex", "solo/duo", "aram", "clash"]
 
 @bot.event
 async def on_ready():
-    for guild in bot.guilds:
-        if len(guild.emojis) > 0:
-            print(guild.emojis[0].id)
-            print(guild.emojis[0].name)
     print("Bot connected.")
 
 @bot.slash_command(
