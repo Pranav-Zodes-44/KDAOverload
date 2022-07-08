@@ -6,9 +6,10 @@ from cassiopeia import Queue
 
 class BotHelper():
 
-    def get_embed_last(self, queue_str, player, league: League):
+    def get_embed_last_simple(self, queue_str, player, match: cass.core.match, league: League):
 
         embed = discord.Embed(title=f"Latest {queue_str} match", description=f"""
+        **Match Start**: 
         **Champion**: {player.champion.name}\n
         **Kills**: {player.stats.kills}\n
         **Deaths**: {player.stats.deaths}\n
