@@ -5,8 +5,6 @@ Features added so far: Getting latest LoL Ranked Match info (Summoners, champion
 
 Currently using ~~RiotWatcher~~ [Cassiopeia](https://github.com/meraki-analytics/cassiopeia) API framework to assist with the Riot API requests.
 
-Going to play around with using [RiotWatcher](https://github.com/pseudonym117/Riot-Watcher) as well.
-
 Using [Pycord](https://github.com/Pycord-Development/pycord) as my Discord API framework.
 
 ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
