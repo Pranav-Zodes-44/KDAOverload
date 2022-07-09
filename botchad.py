@@ -9,7 +9,6 @@ from helpers import BotHelper as bh
 import cassiopeia as cass
 from cassiopeia import Queue
 from league import League
-from helpers import BotHelper as bh
 
 
 with open('config.txt', 'r') as f:
@@ -27,6 +26,7 @@ queue_types = ["normal", "flex", "solo/duo", "aram", "clash"]
 
 @bot.event
 async def on_ready():
+
     print("Bot connected.")
 
 @bot.slash_command(
@@ -46,7 +46,7 @@ async def slash_match_history(
         await invalid_region(ctx, League(), embed)
         return
 
-    response = await ctx.respond("Getting match history... Give me a second, this takes some time ;_;")
+    await ctx.respond("Getting match history... Give me a second, this takes some time ;_;")
 
 
     league = League()
@@ -145,23 +145,26 @@ async def send_stats(ctx, summoner_name, region, queue_type, full: bool):
     queue: cass.Queue = league.get_queue_from_str(queue=queue_type)
 
     latest_match = await get_latest_match(ctx=ctx, summoner_name=summoner_name, region=region, queue=queue, league=league)
+
     if latest_match == None:
         return
-    type(latest_match)
+
+
     player = league.get_player_from_match(match=latest_match, summoner_name=summoner_name)
-
-    queue_str = league.get_str_from_queue(queue=queue)
+    if full == True:
+        embed = get_embed_last_full(queue, player, latest_match, league)
+    else:
+        embed = bh().get_embed_last_simple(queue, player, latest_match, league)
     
-    embed = bh().get_embed_last_simple(queue_str, player, latest_match, league)
-    embed.set_footer(text= bh().get_footer_text(queue=queue, player=player))
-
     if (type(ctx) == discord.ApplicationContext):
         await ctx.send_followup(embed=embed, view = bh().get_opgg(player=player, league=league))
     else:
         await ctx.send(embed=embed, view = bh().get_opgg(player=player, league=league))
 
 
+
 async def get_latest_match(ctx ,summoner_name, region, queue, league):
+    
     try:
         match = league.latest_match(summoner_name=summoner_name, region=region, queue=queue)
         return match
@@ -179,16 +182,7 @@ async def get_latest_match(ctx ,summoner_name, region, queue, league):
         await invalid_region(ctx, league, embed)
         return None
 
-    player = league.get_player_from_match(match=match, summoner_name=summoner_name)
-    if full == True:
-        embed = get_embed_last_full(queue, player, match, league)
-    else:
-        embed = get_embed_last_simple(queue, player, match, league)
     
-    if (type(ctx) == discord.ApplicationContext):
-        await ctx.send_followup(embed=embed, view = bh().get_opgg(player=player, league=league))
-    else:
-        await ctx.send(embed=embed, view = bh().get_opgg(player=player, league=league))
 
 
 async def invalid_region(ctx, league: League, embed):
@@ -196,23 +190,6 @@ async def invalid_region(ctx, league: League, embed):
     embed.set_image(url="https://media.giphy.com/media/EjgA32SgtLpYAz2ZfB/giphy-downsized-large.gif")
     await ctx.send(embed=embed)
 
-
-def get_embed_last_simple(queue, player: cass.core.match.Participant, match: cass.Match, league: League):
-    queue_str = league.get_str_from_queue(queue=queue)
-    result = "Win :white_check_mark:" if player.team.win else "Loss :x:"
-    embed = discord.Embed(title=f"Latest {queue_str} match", description=f"""
-    **Match start**: {match.start.shift(hours=+2).format('DD-MMMM-YYYY HH:mm UTC+02')}\n
-    **Champion**: {player.champion.name}\n
-    **Kills**: {player.stats.kills}\n
-    **Deaths**: {player.stats.deaths}\n
-    **Assists**: {player.stats.assists}\n
-    **Result**: {result}
-        """)
-    embed = bh().get_embed_last(queue_str, player, league)
-    embed = set_embed_image(player, embed=embed)
-    embed.set_footer(text= bh().get_footer_text(queue=queue, player=player))
-
-    return embed
 
 def get_embed_last_full(queue, player, match, league: League):
     queue_str = league.get_str_from_queue(queue=queue)
