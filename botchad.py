@@ -1,4 +1,3 @@
-from dis import disco
 from datapipelines import NotFoundError
 import discord
 from discord.embeds import Embed
@@ -6,8 +5,8 @@ from discord.ext import commands
 import cassiopeia as cass
 from cassiopeia import Queue
 from league import League
-import arrow
-import zoneinfo
+from helpers import BotHelper as bh
+
 
 with open('config.txt', 'r') as f:
     tokens = f.readlines()
@@ -65,10 +64,13 @@ async def slash_match_history(
         description += f"{result} Champion: {p.champion.name} | KDA: {p.stats.kills}/{p.stats.deaths}/{p.stats.assists}\n"
 
     embed = discord.Embed(title=f"{queue_str} Match History", description=description)
-    embed = set_embed_author(p, embed, league)
-    embed.set_footer(text = get_footer_text(queue=queue, player=p))
+    embed = bh().set_embed_author(p, embed, league)
+    embed.set_footer(text = bh().get_footer_text(queue=queue, player=p))
     
-    await ctx.send(embed=embed)
+    await ctx.send_followup(
+        embed=embed, 
+        view = bh().get_opgg(p, league)
+        )
 
 @bot.command(name="match_history", description= "Shows your last 10 matches played. Defaulted to normal draft.")
 async def match_history(ctx, summoner_name = None, region = None, queue_type = None):
@@ -106,10 +108,13 @@ async def match_history(ctx, summoner_name = None, region = None, queue_type = N
         description += f"{result} Champion: {p.champion.name} | KDA: {p.stats.kills}/{p.stats.deaths}/{p.stats.assists}\n"
 
     embed = discord.Embed(title=f"{queue_str} Match History", description=description)
-    embed = set_embed_author(p, embed, league)
-    embed.set_footer(text = get_footer_text(queue=queue, player=p))
-
-    await ctx.send(embed=embed)
+    embed = bh().set_embed_author(p, embed, league)
+    embed.set_footer(text = bh().get_footer_text(queue=queue, player=p))
+    
+    await ctx.send_followup(
+        embed=embed, 
+        view = bh().get_opgg(p, league)
+        )
 
 
 last = bot.create_group("last","Shows your last match played. Defaulted to normal draft.")
@@ -170,7 +175,10 @@ async def send_stats(ctx, summoner_name, region, queue_type, full: bool):
     else:
         embed = get_embed_last_simple(queue, player, match, league)
     
-    await ctx.send(embed=embed)
+    if (type(ctx) == discord.ApplicationContext):
+        await ctx.send_followup(embed=embed, view = bh().get_opgg(player=player, league=league))
+    else:
+        await ctx.send(embed=embed, view = bh().get_opgg(player=player, league=league))
 
 async def invalid_region(ctx, league: League, embed):
     embed.add_field(name="Regions", value=league.get_regions(), inline=False)
@@ -190,9 +198,9 @@ def get_embed_last_simple(queue, player: cass.core.match.Participant, match: cas
     **Assists**: {player.stats.assists}\n
     **Result**: {result}
         """)
-    embed = set_embed_author(player, embed, league)
+    embed = bh().get_embed_last(queue_str, player, league)
     embed = set_embed_image(player, embed=embed)
-    embed.set_footer(text=get_footer_text(queue=queue, player=player))
+    embed.set_footer(text= bh().get_footer_text(queue=queue, player=player))
 
     return embed
 
