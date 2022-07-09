@@ -101,7 +101,7 @@ Latin America South/LAS
             continent = self.summoner.region.continent,
             puuid = self.puuid,
             queue = queue,
-            end_index=2
+            end_index=1
         )
          
         return match_history[0]
@@ -120,6 +120,9 @@ Latin America South/LAS
             end_index=10
         )
         return match_history
+    
+    def get_player_items(self, player: cass.core.match.Participant):
+        return player.stats.items
 
     #TODO: Create set/get queue_type to make the process of error handling easier,
     #since set_region can also throw a KeyError
