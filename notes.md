@@ -47,3 +47,26 @@ in a given amount of time ("rate limiting").
                 queue = cass.Queue.normal_draft_fives,
                 end_index=4
             )
+
+
+
+## Getting all emoji ids from discord bot with item id
+### Update with runes when added
+    item_ids = []
+    emoji_ids = []
+
+    item_to_emoji = dict()
+
+    for guild in bot.guilds:
+        if guild.name == "test" or guild.name == "Temple Of Zodes" or guild.name == "Runes":
+            continue
+        else:
+            for emoji in guild.emojis:
+                item_ids.append(emoji.name)
+                emoji_ids.append(f"<:{emoji.name}:{emoji.id}>")
+
+    for i in range(len(item_ids)):
+        item_ = {item_ids[i]: emoji_ids[i]}
+        item_to_emoji.update(item_)
+    with open("items.json", "w") as items_f:
+        json.dump(item_to_emoji, items_f)
