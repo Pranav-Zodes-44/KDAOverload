@@ -1,7 +1,11 @@
+#%%
+
 from datapipelines import NotFoundError
 import discord
 from discord.embeds import Embed
 from discord.ext import commands
+from discord.ui import Button, View
+from helpers import BotHelper as bh
 import cassiopeia as cass
 from cassiopeia import Queue
 from league import League
@@ -23,7 +27,6 @@ queue_types = ["normal", "flex", "solo/duo", "aram", "clash"]
 
 @bot.event
 async def on_ready():
-    print(f"URL: {discord.utils.oauth_url(client_id=994350658440413234, permissions=discord.Permissions(8), scopes=('bot', 'application.commands'))}")
     print("Bot connected.")
 
 @bot.slash_command(
@@ -43,7 +46,8 @@ async def slash_match_history(
         await invalid_region(ctx, League(), embed)
         return
 
-    await ctx.respond("Getting match history... Give me a second, this takes some time ;_;")
+    response = await ctx.respond("Getting match history... Give me a second, this takes some time ;_;")
+
 
     league = League()
 
@@ -66,7 +70,6 @@ async def slash_match_history(
     embed = discord.Embed(title=f"{queue_str} Match History", description=description)
     embed = bh().set_embed_author(p, embed, league)
     embed.set_footer(text = bh().get_footer_text(queue=queue, player=p))
-    
     await ctx.send_followup(
         embed=embed, 
         view = bh().get_opgg(p, league)
@@ -94,7 +97,6 @@ async def match_history(ctx, summoner_name = None, region = None, queue_type = N
 
     queue = league.get_queue_from_str(queue=queue_type)
     queue_str = league.get_str_from_queue(queue=queue)
-
     matches = league.get_match_history(summoner_name=summoner_name, region=region, queue=queue)
 
     description = ""
@@ -110,12 +112,8 @@ async def match_history(ctx, summoner_name = None, region = None, queue_type = N
     embed = discord.Embed(title=f"{queue_str} Match History", description=description)
     embed = bh().set_embed_author(p, embed, league)
     embed.set_footer(text = bh().get_footer_text(queue=queue, player=p))
-    
-    await ctx.send_followup(
-        embed=embed, 
-        view = bh().get_opgg(p, league)
-        )
 
+    await ctx.send(embed=embed, view = bh().get_opgg(player=p, league=league))
 
 last = bot.create_group("last","Shows your last match played. Defaulted to normal draft.")
 
@@ -126,16 +124,6 @@ async def simple(
     region: discord.Option(name= "region", input_type=str, description="The region you play on", required = True, choices = regions),
     queue_type: discord.Option(name="queue-type", input_type=str, description="Which queue you want to get your match history from.", required = True, choices = queue_types)
 ):
-   
-    if summoner_name == None:
-        ctx.respond("No summoner name.")
-
-    if region == None:
-        embed = discord.Embed(title="You left out the region!", description="Correct format: **!!last [summoner_name] [region]**")
-        await ctx.respond("No region")
-        await invalid_region(ctx, League(), embed)
-        return
-
     await ctx.respond("""
 Getting the data from your last match.
 One moment please... :clock:""")
@@ -156,18 +144,40 @@ async def send_stats(ctx, summoner_name, region, queue_type, full: bool):
 
     queue: cass.Queue = league.get_queue_from_str(queue=queue_type)
 
+    latest_match = await get_latest_match(ctx=ctx, summoner_name=summoner_name, region=region, queue=queue, league=league)
+    if latest_match == None:
+        return
+    type(latest_match)
+    player = league.get_player_from_match(match=latest_match, summoner_name=summoner_name)
+
+    queue_str = league.get_str_from_queue(queue=queue)
+    
+    embed = bh().get_embed_last_simple(queue_str, player, latest_match, league)
+    embed.set_footer(text= bh().get_footer_text(queue=queue, player=player))
+
+    if (type(ctx) == discord.ApplicationContext):
+        await ctx.send_followup(embed=embed, view = bh().get_opgg(player=player, league=league))
+    else:
+        await ctx.send(embed=embed, view = bh().get_opgg(player=player, league=league))
+
+
+async def get_latest_match(ctx ,summoner_name, region, queue, league):
     try:
-        match = league.get_latest_match(summoner_name=summoner_name, region=region, queue=queue)
+        match = league.latest_match(summoner_name=summoner_name, region=region, queue=queue)
+        return match
     except NotFoundError as nfe:
         embed = discord.Embed(title="Summoner not found :(")
         embed.set_image(url="https://media.giphy.com/media/6uGhT1O4sxpi8/giphy.gif")
-        await ctx.send(embeds=[embed])
-        return
+        if (type(ctx) == discord.ApplicationContext):
+            await ctx.send_followup(embed=embed)
+        else:
+            await ctx.send(embed=embed)
+        return None
     except KeyError as ke:
         embed = discord.Embed(title="That's a wacky region you've entered there...", 
                 description="Even the Taliyah doesn't know where that place is!")
         await invalid_region(ctx, league, embed)
-        return
+        return None
 
     player = league.get_player_from_match(match=match, summoner_name=summoner_name)
     if full == True:
@@ -180,12 +190,12 @@ async def send_stats(ctx, summoner_name, region, queue_type, full: bool):
     else:
         await ctx.send(embed=embed, view = bh().get_opgg(player=player, league=league))
 
+
 async def invalid_region(ctx, league: League, embed):
     embed.add_field(name="Regions", value=league.get_regions(), inline=False)
     embed.set_image(url="https://media.giphy.com/media/EjgA32SgtLpYAz2ZfB/giphy-downsized-large.gif")
-    if (type(ctx) == discord.ApplicationContext):
-        await ctx.respond(f"No region.")
     await ctx.send(embed=embed)
+
 
 def get_embed_last_simple(queue, player: cass.core.match.Participant, match: cass.Match, league: League):
     queue_str = league.get_str_from_queue(queue=queue)
@@ -249,4 +259,4 @@ def get_footer_text(queue: Queue, player):
 #TODO: Brainstorm more commands
 
 bot.run(TOKEN)
-
+# %%
