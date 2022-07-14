@@ -70,3 +70,22 @@ in a given amount of time ("rate limiting").
         item_to_emoji.update(item_)
     with open("items.json", "w") as items_f:
         json.dump(item_to_emoji, items_f)
+
+## Getting runes using Cass
+### Player's Runes:
+
+    list(player.runes.items())
+
+## Making calls using Riot API without framework
+
+    import requests
+    api_url = "https://{region}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{name}?api_key={riot_api_key}
+
+    response = requests.get(api_url)
+    json = response.json()
+    print(json.get('name'))
+
+    #Should output with the summoner name requested
+
+
+summoner.league_entries.fives.promos
