@@ -8,7 +8,7 @@ import json
 class BotHelper():
 
     def get_embed_last_simple(self, queue, player, match: cass.core.match, league: League):
-
+        
         embed = discord.Embed(title=f"Latest {League().get_str_from_queue(queue)} match", description=f"""
     **Match start**: {match.start.shift(hours=+2).format('DD-MM-YYYY HH:mm')}\n
         """)
@@ -19,6 +19,8 @@ class BotHelper():
         embed.add_field(name="KDA:", value = f"{player.stats.kills}/{player.stats.deaths}/{player.stats.assists}", inline=True)
         embed.add_field(name="Result:", value=f"{self.get_result(player)}", inline=True)
         embed = self.get_embed_items(player, embed)
+
+        embed.set_footer(text=self.get_footer_text(queue, player))
         
         return embed
     
@@ -67,6 +69,7 @@ class BotHelper():
                 rank = player.summoner.ranks[Queue.ranked_solo_fives]
                 lp = player.summoner.league_entries.fives.league_points
                 return f"Level: {player.summoner.level} || Solo/Duo Rank: {rank.tier} {rank.division} {lp}LP"
+
         except KeyError as ke:
             if Queue.ranked_flex_fives in player.summoner.ranks.keys():
                 rank = player.summoner.ranks[Queue.ranked_flex_fives]
