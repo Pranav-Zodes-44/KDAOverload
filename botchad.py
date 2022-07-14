@@ -201,7 +201,7 @@ def get_embed_last_full(queue, player, match, league: League):
         """)
     embed = set_embed_author(player, embed, league)
     embed = set_embed_image(player, embed=embed)
-    embed.set_footer(text=get_footer_text(queue=queue, player=player))
+    embed.set_footer(text=bh().get_footer_text(queue=queue, player=player))
 
     return embed
 
@@ -214,24 +214,6 @@ def set_embed_author(player, embed: discord.Embed, league: League):
 def set_embed_image(player, embed: discord.Embed):
     embed.set_image(url=player.champion.image.url)
     return embed
-
-def get_footer_text(queue: Queue, player):
-    try:
-        if queue == Queue.ranked_flex_fives:
-            rank = player.summoner.ranks[Queue.ranked_flex_fives]
-            lp = player.summoner.league_entries.flex.league_points
-            return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
-        else:
-            rank = player.summoner.ranks[Queue.ranked_solo_fives]
-            lp = player.summoner.league_entries.fives.league_points
-            return f"Level: {player.summoner.level} || Solo/Duo Rank: {rank.tier} {rank.division} {lp}LP"
-    except KeyError as ke:
-        if Queue.ranked_flex_fives in player.summoner.ranks.keys():
-            rank = player.summoner.ranks[Queue.ranked_flex_fives]
-            lp = player.summoner.league_entries.flex.league_points
-            return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
-        else:
-            return f"Level: {player.summoner.level} || Unranked"
 
 #TODO: Brainstorm more commands
 
