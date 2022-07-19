@@ -64,19 +64,69 @@ class BotHelper():
             if queue == Queue.ranked_flex_fives:
                 rank = player.summoner.ranks[Queue.ranked_flex_fives]
                 lp = player.summoner.league_entries.flex.league_points
-                return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
+
+                #Returns "" if player is not in promos
+                promos = self.get_promos_text(player.summoner.league_entries.flex.promos)
+
+                if promos == "":
+                    return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
+                else:
+                    return f"""Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP
+                       Promos: {promos}"""
             else:
                 rank = player.summoner.ranks[Queue.ranked_solo_fives]
                 lp = player.summoner.league_entries.fives.league_points
-                return f"Level: {player.summoner.level} || Solo/Duo Rank: {rank.tier} {rank.division} {lp}LP"
+                promos = self.get_promos_text(player.summoner.league_entries.fives.promos)
+
+                if promos == "":
+                    return f"""Level: {player.summoner.level} || Solo/Duo Rank: {rank.tier} {rank.division} {lp}LP"""
+                else:
+                    return f"""Level: {player.summoner.level} || Solo/Duo Rank: {rank.tier} {rank.division} {lp}LP
+                       Promos: {promos}"""
 
         except KeyError as ke:
             if Queue.ranked_flex_fives in player.summoner.ranks.keys():
                 rank = player.summoner.ranks[Queue.ranked_flex_fives]
                 lp = player.summoner.league_entries.flex.league_points
-                return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
+                promos = self.get_promos_text(player.summoner.league_entries.flex.promos)
+
+                if promos == "":
+                    return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
+                else:
+                    return f"""Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP
+                       Promos: {promos}"""
             else:
                 return f"Level: {player.summoner.level} || Unranked"
+        except ValueError as ve:
+            return f"Level: {player.summoner.level} || Unranked"
+
+    
+    def get_promos_text(self, promos):
+
+        win = "✅ | "
+        loss = "❌ | "
+
+        p_text = ""
+
+        if promos != None:
+            
+            progress = promos.progress
+            games_played = len(progress)
+
+
+            for game in progress:
+                
+                if game:
+                    p_text += win
+                else:
+                    p_text += loss
+
+            for i in range((5-games_played)):
+                p_text += "- | "
+
+        return p_text
+
+
             
     def get_opgg(self, player, league):
         url = f"https://op.gg/summoners/{league.region.lower()}/{player.summoner.name}"
