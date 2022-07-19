@@ -66,7 +66,7 @@ class BotHelper():
                 lp = player.summoner.league_entries.flex.league_points
 
                 #Returns "" if player is not in promos
-                promos = self.get_promos_text(player.summoner.league_entries.flex.promos)
+                promos = self.promos_text(player.summoner.league_entries.flex.promos)
 
                 if promos == "":
                     return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
@@ -76,7 +76,7 @@ class BotHelper():
             else:
                 rank = player.summoner.ranks[Queue.ranked_solo_fives]
                 lp = player.summoner.league_entries.fives.league_points
-                promos = self.get_promos_text(player.summoner.league_entries.fives.promos)
+                promos = self.promos_text(player.summoner.league_entries.fives.promos)
 
                 if promos == "":
                     return f"""Level: {player.summoner.level} || Solo/Duo Rank: {rank.tier} {rank.division} {lp}LP"""
@@ -88,7 +88,7 @@ class BotHelper():
             if Queue.ranked_flex_fives in player.summoner.ranks.keys():
                 rank = player.summoner.ranks[Queue.ranked_flex_fives]
                 lp = player.summoner.league_entries.flex.league_points
-                promos = self.get_promos_text(player.summoner.league_entries.flex.promos)
+                promos = self.promos_text(player.summoner.league_entries.flex.promos)
 
                 if promos == "":
                     return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
@@ -101,7 +101,7 @@ class BotHelper():
             return f"Level: {player.summoner.level} || Unranked"
 
     
-    def get_promos_text(self, promos):
+    def promos_text(self, promos):
 
         win = "✅ | "
         loss = "❌ | "
