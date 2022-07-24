@@ -20,6 +20,8 @@ python-dotenv==0.20.0
 requests==2.28.0
 riotwatcher==3.2.2
 six==1.16.0
+table2ascii==0.3.0
+tabulate==0.8.10
 typing-extensions==4.2.0
 urllib3==1.26.9
 yarl==1.7.2
