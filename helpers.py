@@ -25,19 +25,6 @@ class BotHelper():
         
         return embed
 
-
-    def get_embed_last_full(self, queue, player, match, league: League):
-
-        queue_str = league.get_str_from_queue(queue=queue)
-
-        embed = discord.Embed(title=f"Latest {queue_str} match")
-        embed = self.set_embed_author(player, embed, league)
-        embed = self.add_blue_team(match, embed)
-        embed = self.add_red_team(match, embed)
-       
-        embed.set_footer(text=self.get_footer_text(queue=queue, player=player))
-
-        return embed
     
     def get_embed_items(self, player: cass.core.match.Participant, embed):
 
@@ -72,58 +59,20 @@ class BotHelper():
 
         return items_emojis
 
-    def add_blue_team(self, match: cass.core.match, embed: discord.Embed):
-
-        blue_team = []
-
-        for p in match.blue_team.participants:
-            s = p.stats
-            name, kills, deaths, assists, cs = p.summoner.name, s.kills, s.deaths, s.assists, s.total_minions_killed
-            blue_team.append([name, kills, deaths, assists, cs])
-            
-        blue_team_table = tabulate(
-            #Add "Champion" with champion icon before summoner when added to dc
-            #Also add summoner spells
-            blue_team, 
-            headers=["Summoner", "K", "D", "A", "CS"], 
-            tablefmt="simple", 
-            maxcolwidths=[None, 2, 2, 2, 3],
-            colalign=("left", "left", "left", "left", "left")
-            )
-        
-        if match.blue_team.win:
-            return embed.add_field(name=f"Blue Team: (W)", value=f"```\n{blue_team_table}\n```", inline=False)
-
-        return embed.add_field(name=f"Blue Team: (L)", value=f"```\n{blue_team_table}\n```", inline=False)
-
-
-
-    def add_red_team(self, match: cass.core.match, embed: discord.Embed):
-
-        red_team = []
-
-        for p in match.red_team.participants:
-            s = p.stats
-            name, kills, deaths, assists, cs = p.summoner.name, s.kills, s.deaths, s.assists, s.total_minions_killed
-            red_team.append([name, kills, deaths, assists, cs])
-
-        red_team_table = tabulate(
-            #Add "Champion" with champion icon before summoner when added to dc
-            #Also add summoner spells
-            red_team, 
-            headers=["Summoner", "K", "D", "A", "CS"], 
-            tablefmt="simple", 
-            maxcolwidths=[None, 2, 2, 2, 3],
-            colalign=("left", "left", "left", "left", "left")
-            )
-
-        if match.red_team.win:
-            return embed.add_field(name=f"Red Team: (W)", value=f"```\n{red_team_table}\n```", inline=False)
-
-        return embed.add_field(name=f"Red Team: (L)", value=f"```\n{red_team_table}\n```", inline=False)
 
     def set_embed_author(self, player, embed: discord.Embed, league: League):
-        opgg = f"https://op.gg/summoners/{league.region.lower()}/{player.summoner.name}"
+        if " " in player.summoner.name:
+            name = []
+            name = player.summoner.name.split(" ")
+            opgg_name = ""
+            for word in name:
+                if name.index(word) != (len(name) - 1):
+                    opgg_name += word + "%20"
+                else:
+                    opgg_name += word
+            opgg = f"https://op.gg/summoners/{league.region.lower()}/{opgg_name}"
+        else:
+            opgg = f"https://op.gg/summoners/{league.region.lower()}/{player.summoner.name}"
         embed.set_author(name=player.summoner.name, icon_url=player.summoner.profile_icon.url, 
                             url=opgg)
         return embed
@@ -145,7 +94,8 @@ class BotHelper():
                 if promos == "":
                     return f"Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP"
                 else:
-                    return f"""Level: {player.summoner.level} || Flex Rank: {rank.tier} {rank.division} {lp}LP
+                    return f"""Level: {player.summoner.level} |  36326      35923
+Nekotaryoz         24199      31532| Flex Rank: {rank.tier} {rank.division} {lp}LP
                        Promos: {promos}"""
             else:
                 rank = player.summoner.ranks[Queue.ranked_solo_fives]
@@ -228,165 +178,388 @@ class AdvancedStats():
         self.match = match
         self.league = league
 
-        self.gold = self.Gold(queue=queue, player=player, match=match, league=league)
-        self.items = self.Items(queue=queue, player=player, match=match, league=league)
-        self.dd = self.DamageDone(queue=queue, player=player, match=match, league=league)
-        self.dt = self.DamageTaken(queue=queue, player=player, match=match, league=league)
+    def get_embed_last(self):
+
+        bh = BotHelper()
+
+        queue_str = self.league.get_str_from_queue(queue=self.queue)
+
+        embed = discord.Embed(title=f"Latest {queue_str} match")
+        embed = bh.set_embed_author(self.player, embed, self.league)
+        embed = self.add_blue_team(embed)
+        embed = self.add_red_team(embed)
+       
+        embed.set_footer(text=bh.get_footer_text(queue=self.queue, player=self.player))
+
+        return embed
+    
+
+    def add_blue_team(self, embed: discord.Embed):
+
+        blue_team = []
+
+        for p in self.match.blue_team.participants:
+            s = p.stats
+            name, kills, deaths, assists, cs = p.summoner.name, s.kills, s.deaths, s.assists, s.total_minions_killed
+            blue_team.append([name, kills, deaths, assists, cs])
+            
+        blue_team_table = tabulate(
+            #Add "Champion" with champion icon before summoner when added to dc
+            #Also add summoner spells
+            blue_team, 
+            headers=["Summoner", "K", "D", "A", "CS"], 
+            tablefmt="simple", 
+            maxcolwidths=[None, 2, 2, 2, 3],
+            colalign=("left", "left", "left", "left", "left")
+            )
+        
+        if self.match.blue_team.win:
+            return embed.add_field(name=f"Blue Team: (W)", value=f"```\n{blue_team_table}\n```", inline=False)
+
+        return embed.add_field(name=f"Blue Team: (L)", value=f"```\n{blue_team_table}\n```", inline=False)
+
+
+
+    def add_red_team(self, embed: discord.Embed):
+
+        red_team = []
+
+        for p in self.match.red_team.participants:
+            s = p.stats
+            name, kills, deaths, assists, cs = p.summoner.name, s.kills, s.deaths, s.assists, s.total_minions_killed
+            red_team.append([name, kills, deaths, assists, cs])
+
+        red_team_table = tabulate(
+            #Add "Champion" with champion icon before summoner when added to dc
+            #Also add summoner spells
+            red_team, 
+            headers=["Summoner", "K", "D", "A", "CS"], 
+            tablefmt="simple", 
+            maxcolwidths=[None, 2, 2, 2, 3],
+            colalign=("left", "left", "left", "left", "left")
+            )
+
+        if self.match.red_team.win:
+            return embed.add_field(name=f"Red Team: (W)", value=f"```\n{red_team_table}\n```", inline=False)
+
+        return embed.add_field(name=f"Red Team: (L)", value=f"```\n{red_team_table}\n```", inline=False)
+
 
     
-    class Gold():
+class Gold(AdvancedStats):
 
-        def __init__(self, queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, league: League):
-            self.queue = queue
-            self.player = player
-            self.match = match
-            self.league = league
+    def __init__(self, queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, league: League):
+        super().__init__(queue, player, match, league)
 
-        def get_gold_embed(self):
-            queue_str = self.league.get_str_from_queue(queue=self.queue)
+    def get_gold_embed(self):
+        queue_str = self.league.get_str_from_queue(queue=self.queue)
 
-            embed = discord.Embed(title=f"Latest {queue_str} match")
-            embed = BotHelper().set_embed_author(self.player, embed, self.league)
-            embed = self.add_blue_team(self.match, embed)
-            embed = self.add_red_team(self.match, embed)
+        embed = discord.Embed(title=f"Latest {queue_str} match")
+        embed = BotHelper().set_embed_author(self.player, embed, self.league)
+        embed = self.add_blue_team(embed)
+        embed = self.add_red_team(embed)
+    
+        embed.set_footer(text=BotHelper().get_footer_text(queue=self.queue, player=self.player))
+
+        return embed
+
+    def add_blue_team(self, embed: discord.Embed):
+
+        blue_team = []
+
+        for p in self.match.blue_team.participants:
+            s = p.stats
+            name, earned, spent = p.summoner.name, s.gold_earned, s.gold_spent
+            blue_team.append([name, earned, spent])
+            
+        blue_team_table = tabulate(
+            #Add "Champion" with champion icon before summoner when added to dc
+            #Also add summoner spells
+            blue_team, 
+            headers=["Summoner", "Earned", "Spent"], 
+            tablefmt="simple", 
+            colalign=("left", "center", "center")
+            )
         
-            embed.set_footer(text=BotHelper().get_footer_text(queue=self.queue, player=self.player))
+        if self.match.blue_team.win:
+            return embed.add_field(name=f"Blue Team: (W)", value=f"```\n{blue_team_table}\n```", inline=False)
 
-            return embed
+        return embed.add_field(name=f"Blue Team: (L)", value=f"```\n{blue_team_table}\n```", inline=False)
 
-        def add_blue_team(self, match: cass.core.match, embed: discord.Embed):
 
+
+    def add_red_team(self, embed: discord.Embed):
+
+        red_team = []
+
+        for p in self.match.red_team.participants:
+            s = p.stats
+            name, earned, spent = p.summoner.name, s.gold_earned, s.gold_spent
+            red_team.append([name, earned, spent])
+
+        red_team_table = tabulate(
+            #Add "Champion" with champion icon before summoner when added to dc
+            #Also add summoner spells
+            red_team, 
+            headers=["Summoner", "Earned", "Spent"], 
+            tablefmt="simple", 
+            colalign=("left", "center", "center")
+            )
+
+        if self.match.red_team.win:
+            return embed.add_field(name=f"Red Team: (W)", value=f"```\n{red_team_table}\n```", inline=False)
+
+        return embed.add_field(name=f"Red Team: (L)", value=f"```\n{red_team_table}\n```", inline=False)
+
+class Items():
+
+    def __init__(self, queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, league: League):
+        self.queue = queue
+        self.player = player
+        self.match = match
+        self.league = league
+
+    def get_items_embed(self):
+        #TODO: Display items and summoners
+
+        queue_str = self.league.get_str_from_queue(queue=self.queue)
+
+        embed = discord.Embed(title=f"Latest {queue_str} match")
+        embed = BotHelper().set_embed_author(self.player, embed, self.league)
+        embed = self.add_blue_team(embed)
+        embed = self.add_red_team(embed)
+
+        # embed = self.add_players_items(embed=embed)
+    
+        embed.set_footer(text=BotHelper().get_footer_text(queue=self.queue, player=self.player))
+
+        return embed
+
+
+    def add_blue_team(self, embed: discord.Embed):
+
+        if self.match.blue_team.win:
+            embed.add_field(name=f"Blue Team:", value="WIN",inline=False)
+        else:
+            embed.add_field(name=f"Blue Team:", value="LOSE",inline=False)
+
+
+        for p in self.match.blue_team.participants:
+            
             blue_team = []
 
-            for p in match.blue_team.participants:
-                s = p.stats
-                name, earned, spent = p.summoner.name, s.gold_earned, s.gold_spent
-                blue_team.append([name, earned, spent])
-                
+            name, d, f,items = p.summoner.name, p.summoner_spell_d.id, p.summoner_spell_f.id, BotHelper().get_items(player=p)
+
+            blue_team.append([d, f, items])
+
             blue_team_table = tabulate(
                 #Add "Champion" with champion icon before summoner when added to dc
                 #Also add summoner spells
                 blue_team, 
-                headers=["Summoner", "Earned", "Spent"], 
-                tablefmt="simple", 
-                colalign=("left", "center", "center")
+                headers=["D", "F", "Items"], 
+                colalign=("center", "center", "left")
                 )
-            
-            if match.blue_team.win:
-                return embed.add_field(name=f"Blue Team: (W)", value=f"```\n{blue_team_table}\n```", inline=False)
-
-            return embed.add_field(name=f"Blue Team: (L)", value=f"```\n{blue_team_table}\n```", inline=False)
 
 
+            embed.add_field(name=f"{name}", value=f"{blue_team_table}", inline=False)
 
-        def add_red_team(self, match: cass.core.match, embed: discord.Embed):
+        return embed
+
+
+
+    def add_red_team(self, embed: discord.Embed):
+
+        #Add each summoner to a seperate field
+
+        if self.match.red_team.win:
+            embed.add_field(name=f"Red Team:", value="WIN", inline=False)
+        else:
+            embed.add_field(name=f"Red Team:", value="LOSE", inline=False)
+
+
+        for p in self.match.red_team.participants:
 
             red_team = []
 
-            for p in match.red_team.participants:
-                s = p.stats
-                name, earned, spent = p.summoner.name, s.gold_earned, s.gold_spent
-                red_team.append([name, earned, spent])
+            name, d, f,items = p.summoner.name, p.summoner_spell_d.id, p.summoner_spell_f.id, BotHelper().get_items(player=p)
+            red_team.append([d, f, items])
 
             red_team_table = tabulate(
                 #Add "Champion" with champion icon before summoner when added to dc
                 #Also add summoner spells
                 red_team, 
-                headers=["Summoner", "Earned", "Spent"], 
-                tablefmt="simple", 
-                colalign=("left", "center", "center")
+                headers=["D", "F", "Items"], 
+                colalign=("center", "center", "left")
                 )
 
-            if match.red_team.win:
-                return embed.add_field(name=f"Red Team: (W)", value=f"```\n{red_team_table}\n```", inline=False)
+            embed.add_field(name=f"{name}", value=f"{red_team_table}", inline=False)
 
-            return embed.add_field(name=f"Red Team: (L)", value=f"```\n{red_team_table}\n```", inline=False)
+        return embed
 
-    class Items():
+    def add_players_items(self, embed: discord.Embed):
 
-        def __init__(self, queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, league: League):
-            self.queue = queue
-            self.player = player
-            self.match = match
-            self.league = league
+        if self.match.blue_team.win:
+            embed.add_field(name=f"Blue Team:", value="**WIN**",inline=True)
+        else:
+            embed.add_field(name=f"Blue Team:", value="**LOSE**",inline=True)
+        
+        if self.match.red_team.win:
+            embed.add_field(name=f"Red Team:", value="**WIN**", inline=True)
+        else:
+            embed.add_field(name=f"Red Team:", value="**LOSE**", inline=True)
 
-        def get_items_embed(self, queue, player, match, league):
-            #TODO: Display items and summoners
-            pass
+        for i in range(5):
+            
+            b = self.match.blue_team.participants[i]
+            r = self.match.red_team.participants[i]
 
-    class DamageDone():
+            name_b, items_b = b.summoner.name, BotHelper().get_items(player=b)
+            name_r, items_r = r.summoner.name, BotHelper().get_items(player=r)
 
-        def __init__(self, queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, league: League):
-            self.queue = queue
-            self.player = player
-            self.match = match
-            self.league = league
+            embed.add_field(name=f"{name_b}                         {name_r}", 
+                            value=f"{items_b}                       |           {items_r}", inline=False)
+            # embed.add_field(name=f"{name_r}", value=f"{items_r}", inline=True)
 
-        def get_damage_done_embed(self, queue, player, match, league):
-            #TODO: Display damage done (physical and magical)
-            pass
+        return embed
+    
 
-    class DamageTaken():
+class DamageDone():
 
-        def __init__(self, queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, league: League):
-            self.queue = queue
-            self.player = player
-            self.match = match
-            self.league = league
-
-        def get_damage_taken_embed(self, queue, player, match, league):
-            #TODO: Display damage taken and mitigated
-            pass
-
-
-class AdvancedView(View):
-
-    def __init__(self, *items: discord.ui.Item, timeout: discord.Optional[float] = 180, 
-                    queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, 
-                    league: League):
-        super().__init__(*items, timeout=timeout)
+    def __init__(self, queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, league: League):
         self.queue = queue
         self.player = player
         self.match = match
         self.league = league
-        self.add_item(self.opgg())
-        self.advanced = AdvancedStats(queue=queue, player=player, match=match, league=league)
 
-    def opgg(self):
+    def get_damage_done_embed(self):
+        #TODO: Display damage done (physical and magical)
+        
+        queue_str = self.league.get_str_from_queue(queue=self.queue)
+
+        embed = discord.Embed(title=f"Latest {queue_str} match")
+        embed = BotHelper().set_embed_author(self.player, embed, self.league)
+        embed = self.add_blue_team(embed)
+        embed = self.add_red_team(embed)
     
-        url = f"https://op.gg/summoners/{self.league.region.lower()}/{self.player.summoner.name}"
-        opgg = Button(label = "OP.GG", url = url)
+        embed.set_footer(text=BotHelper().get_footer_text(queue=self.queue, player=self.player))
 
-        return opgg
+        return embed
+
+    def add_blue_team(self, embed: discord.Embed):
+
+        blue_team = []
+
+        for p in self.match.blue_team.participants:
+            s = p.stats
+            name, physical, magic, total = p.summoner.name, s.physical_damage_dealt, s.magic_damage_dealt_to_champions, s.total_damage_dealt_to_champions
+            blue_team.append([name, physical, magic, total])
+            
+        blue_team_table = tabulate(
+            #Add "Champion" with champion icon before summoner when added to dc
+            #Also add summoner spells
+            blue_team, 
+            headers=["Summoner", "Physical", "Magic", "Total"], 
+            tablefmt="simple", 
+            colalign=("left", "left", "center", "center")
+            )
+        
+        if self.match.blue_team.win:
+            return embed.add_field(name=f"Blue Team: (W)", value=f"```\n{blue_team_table}\n```", inline=False)
+
+        return embed.add_field(name=f"Blue Team: (L)", value=f"```\n{blue_team_table}\n```", inline=False)
+
+
+
+    def add_red_team(self, embed: discord.Embed):
+
+        red_team = []
+
+        for p in self.match.red_team.participants:
+            s = p.stats
+            name, physical, magic, total = p.summoner.name, s.physical_damage_dealt, s.magic_damage_dealt_to_champions, s.total_damage_dealt_to_champions
+            red_team.append([name, physical, magic, total])
+
+        red_team_table = tabulate(
+            #Add "Champion" with champion icon before summoner when added to dc
+            #Also add summoner spells
+            red_team, 
+            headers=["Summoner", "Physical", "Magic", "Total"], 
+            tablefmt="simple", 
+            colalign=("left", "left", "center", "center")
+            )
+
+        if self.match.red_team.win:
+            return embed.add_field(name=f"Red Team: (W)", value=f"```\n{red_team_table}\n```", inline=False)
+
+        return embed.add_field(name=f"Red Team: (L)", value=f"```\n{red_team_table}\n```", inline=False)
+
+
+
+class DamageTaken():
+
+    def __init__(self, queue: cass.Queue, player: cass.core.match.Participant, match: cass.core.match, league: League):
+        self.queue = queue
+        self.player = player
+        self.match = match
+        self.league = league
+
+    def get_damage_taken_embed(self):
+        #TODO: Display damage taken and mitigated
+        queue_str = self.league.get_str_from_queue(queue=self.queue)
+
+        embed = discord.Embed(title=f"Latest {queue_str} match")
+        embed = BotHelper().set_embed_author(self.player, embed, self.league)
+        embed = self.add_blue_team(embed)
+        embed = self.add_red_team(embed)
     
+        embed.set_footer(text=BotHelper().get_footer_text(queue=self.queue, player=self.player))
 
-    @discord.ui.button(label="KDA", custom_id="kda", disabled=True)
-    async def kda_button_callback(self, button, interaction: discord.interactions.Interaction):
-        self.enable_all_items()
-        button.disabled = True
-        embed = BotHelper().get_embed_last_full(self.queue, self.player, self.match, self.league)
-        await interaction.response.edit_message(embed=embed, view=self)
+        return embed
+
+    def add_blue_team(self, embed: discord.Embed):
+
+        blue_team = []
+
+        for p in self.match.blue_team.participants:
+            s = p.stats
+            name, mitigated, total = p.summoner.name, s.damage_self_mitigated, s.total_damage_taken
+            blue_team.append([name, mitigated, total])
+            
+        blue_team_table = tabulate(
+            #Add "Champion" with champion icon before summoner when added to dc
+            #Also add summoner spells
+            blue_team, 
+            headers=["Summoner", "Mitigated", "Total"], 
+            tablefmt="simple", 
+            colalign=("left", "center", "center")
+            )
+        
+        if self.match.blue_team.win:
+            return embed.add_field(name=f"Blue Team: (W)", value=f"```\n{blue_team_table}\n```", inline=False)
+
+        return embed.add_field(name=f"Blue Team: (L)", value=f"```\n{blue_team_table}\n```", inline=False)
 
 
-    @discord.ui.button(label="Gold", custom_id="gold")
-    async def gold_button_callback(self, button, interaction):
-        self.enable_all_items()
-        button.disabled = True
-        embed = self.advanced.gold.get_gold_embed()
-        await interaction.response.edit_message(embed=embed, view=self)
 
+    def add_red_team(self, embed: discord.Embed):
 
-    @discord.ui.button(label="Damage Done", custom_id="damage_d")
-    async def damage_d_button_callback(self, button, interaction):
-        self.enable_all_items()
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
+        red_team = []
 
+        for p in self.match.red_team.participants:
+            s = p.stats
+            name, mitigated, total = p.summoner.name, s.damage_self_mitigated, s.total_damage_taken
+            red_team.append([name, mitigated, total])
 
-    @discord.ui.button(label="Damage Taken", custom_id="damage_t")
-    async def damage_t_button_callback(self, button, interaction):
-        self.enable_all_items()
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
+        red_team_table = tabulate(
+            #Add "Champion" with champion icon before summoner when added to dc
+            #Also add summoner spells
+            red_team, 
+            headers=["Summoner", "Mitigated", "Total"], 
+            tablefmt="simple", 
+            colalign=("left", "center", "center")
+            )
 
-    
+        if self.match.red_team.win:
+            return embed.add_field(name=f"Red Team: (W)", value=f"```\n{red_team_table}\n```", inline=False)
+
+        return embed.add_field(name=f"Red Team: (L)", value=f"```\n{red_team_table}\n```", inline=False)
