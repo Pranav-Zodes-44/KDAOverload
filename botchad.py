@@ -2,11 +2,9 @@
 
 from datapipelines import NotFoundError
 import discord
-from discord.embeds import Embed
 from discord.ext import commands
-from discord.ui import Button, View
-from helpers import BotHelper as bh
-from helpers import AdvancedView as av
+from helpers import AdvancedStats, BotHelper as bh
+from views import AdvancedView as av
 import cassiopeia as cass
 from cassiopeia import datastores
 from league import League
@@ -142,6 +140,7 @@ async def full(
     region: discord.Option(name= "region", input_type=str, description="The region you play on", required = True, choices = regions),
     queue_type: discord.Option(name="queue-type", input_type=str, description="Which queue you want to get your match history from.", required = True, choices = queue_types)
     ):
+    discord.OptionChoice
 
     try:
         await ctx.respond("""
@@ -152,7 +151,7 @@ One moment please... :clock:""")
         await ctx.send_followup("Rate Limit! Please try again in a minute... :(")
 
 
-async def send_stats(ctx, summoner_name, region, queue_type, full: bool):
+async def send_stats(ctx: discord.ApplicationContext, summoner_name, region, queue_type, full: bool):
     league = League()
 
     queue: cass.Queue = league.get_queue_from_str(queue=queue_type)
@@ -168,7 +167,7 @@ async def send_stats(ctx, summoner_name, region, queue_type, full: bool):
     view = bh().get_opgg(player=player, league=league)
 
     if full == True:
-        embed = bh().get_embed_last_full(queue, player, latest_match, league)
+        embed = AdvancedStats(queue, player, latest_match, league).get_embed_last()
     else:
         embed = bh().get_embed_last_simple(queue, player, latest_match, league)
     
@@ -176,9 +175,9 @@ async def send_stats(ctx, summoner_name, region, queue_type, full: bool):
 
     if (type(ctx) == discord.ApplicationContext):
         if full:
-            await ctx.send_followup(embed=embed, view = av(queue=queue, player=player, match=latest_match, league=league))
+            await ctx.edit(content="Done!\nHere it is:", embed=embed, view = av(queue=queue, player=player, match=latest_match, league=league))
         else:
-            await ctx.send_followup(embed=embed, view = view)
+            await ctx.edit(content="Done!\nHere it is:", embed=embed, view = view)
     else:
         if full:
             await ctx.send(embed=embed, view = av(queue=queue, player=player, match=latest_match, league=league))
