@@ -8,6 +8,17 @@ from tabulate import tabulate
 
 class BotHelper():
 
+    def check_overwrite(self, reaction):
+
+        if reaction == None:
+            return None
+        
+        if reaction == "👍":
+            return True
+            
+        elif reaction == "👎":
+            return False
+
     def get_embed_last_simple(self, queue, player, match: cass.core.match, league: League):
         
         embed = discord.Embed(title=f"Latest {League().get_str_from_queue(queue)} match", description=f"""
@@ -563,3 +574,6 @@ class DamageTaken():
             return embed.add_field(name=f"Red Team: (W)", value=f"```\n{red_team_table}\n```", inline=False)
 
         return embed.add_field(name=f"Red Team: (L)", value=f"```\n{red_team_table}\n```", inline=False)
+
+
+    
