@@ -20,9 +20,8 @@ class League:
             "LATIN AMERICA NORTH":"LAN", "LAN": "LAN",
             "LATIN AMERICA SOUTH":"la2", "LAS": "LAS"}
 
-    def __init__(self, summoner = None, region: str = None, summ_id: str = None, puuid: str = None) -> None:
+    def __init__(self, summoner = None, region: str = None, puuid: str = None) -> None:
         self.summoner = summoner
-        self.summ_id = summ_id
         self.region = region
         self.puuid = puuid
         self.api_key = self.get_api_key()
@@ -37,7 +36,7 @@ class League:
 
             self.set_region(region = region)
             summoner = self.summoner = cass.get_summoner(name=summoner_name, region=self.region)
-            self.summ_id, self.puuid = summoner.id, summoner.puuid
+            self.puuid = summoner.puuid
 
         # self.latest_ranked_match()
     
@@ -96,7 +95,9 @@ Latin America South/LAS
 
 
     def latest_match(self, summoner_name, region, queue: Queue) -> cass.core.match.Match:
+
         self.set_summoner_id_from_name(summoner_name=summoner_name, region=region)
+
         match_history = cass.get_match_history(
             continent = self.summoner.region.continent,
             puuid = self.puuid,
